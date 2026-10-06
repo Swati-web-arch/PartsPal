@@ -1,22 +1,26 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import inventoryRoutes from './routes/inventory.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS so client running on Vite (port 5173) can talk to Express
+// Enable CORS for frontend
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true
 }));
 
-// Body parser for JSON payloads
+// Body parser
 app.use(express.json());
 
-// Health check endpoint (useful for Render deployment and sanity checks)
+// Routes
+app.use('/api', inventoryRoutes);
+
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
