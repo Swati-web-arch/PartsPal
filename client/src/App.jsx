@@ -11,7 +11,8 @@ import {
   markDefectiveReturn,
   updateKit,
   createKit,
-  addPart
+  addPart,
+  updatePartStock
 } from './api';
 import AuthScreen from './components/AuthScreen';
 import ParticipantPortal from './components/ParticipantPortal';
@@ -147,11 +148,24 @@ export default function App() {
     }
   };
 
-  // OC adds part
+  // OC adds part (returns created part for inline kit creation)
   const handleAddPart = async (partData) => {
     try {
       const result = await addPart(partData);
       showMessage(`Added ${result.name} to inventory!`);
+      await loadAllData();
+      return result;
+    } catch (err) {
+      showMessage(err.message, 'error');
+      throw err;
+    }
+  };
+
+  // OC updates part stock
+  const handleUpdatePartStock = async (partId, updateData) => {
+    try {
+      const result = await updatePartStock(partId, updateData);
+      showMessage(`Updated stock for ${result.name}!`);
       await loadAllData();
     } catch (err) {
       showMessage(err.message, 'error');
@@ -209,6 +223,7 @@ export default function App() {
           onUpdateKit={handleUpdateKit}
           onCreateKit={handleCreateKit}
           onAddPart={handleAddPart}
+          onUpdatePartStock={handleUpdatePartStock}
         />
       )}
     </div>

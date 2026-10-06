@@ -33,6 +33,17 @@ export async function addPart(partData) {
   return data;
 }
 
+export async function updatePartStock(partId, updateData) {
+  const res = await fetch(`${API_BASE}/parts/${partId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updateData)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update part stock');
+  return data;
+}
+
 export async function fetchKits() {
   const res = await fetch(`${API_BASE}/kits`);
   if (!res.ok) throw new Error('Failed to fetch kits');

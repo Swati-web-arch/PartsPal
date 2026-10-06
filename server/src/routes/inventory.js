@@ -32,6 +32,7 @@ router.get('/parts', (req, res) => {
 
 /**
  * POST /api/parts
+ * Add a new part to inventory
  */
 router.post('/parts', (req, res) => {
   const { name, category, total, lowStockThreshold } = req.body;
@@ -60,8 +61,47 @@ router.post('/parts', (req, res) => {
   };
 
   db.parts.push(newPart);
-  logEvent('PART_CREATED', 'oc', newPart.id, { name: newPart.name });
+  logEvent('PART_CREATED', 'oc', newPart.id, { name: newPart.name, total: newPart.total });
   res.status(201).json(newPart);
+});
+
+/**
+ * PATCH /api/parts/:id
+ * OC Member can update stock count or threshold
+ */
+router.patch('/parts/:id', (req, res) => {
+  const part = db.parts.find((p) => p.id === req.params.id);
+  if (!part) {
+    return res.status(404).json({ error: 'Part not found' });
+  }
+
+  const { total, available, lowStockThreshold, name, category } = req.body;
+  if (name) part.name = name.trim();
+  if (category) part.category = category.trim();
+
+  if (total !== undefined) {
+    const parsedTotal = parseInt(total, 10);
+    if (!isNaN(parsedTotal) && parsedTotal >= 0) {
+      // Calculate difference to adjust available proportionally
+      const diff = parsedTotal - part.total;
+      part.total = parsedTotal;
+      part.available = Math.max(0, part.available + diff);
+    }
+  }
+
+  if (available !== undefined) {
+    const parsedAvailable = parseInt(available, 10);
+    if (!isNaN(parsedAvailable) && parsedAvailable >= 0) {
+      part.available = Math.min(part.total, parsedAvailable);
+    }
+  }
+
+  if (lowStockThreshold !== undefined) {
+    part.lowStockThreshold = parseInt(lowStockThreshold, 10) || 1;
+  }
+
+  logEvent('PART_STOCK_UPDATED', 'oc', part.id, { total: part.total, available: part.available });
+  res.json(part);
 });
 
 /**
@@ -97,7 +137,6 @@ router.get('/kits', (req, res) => {
 /**
  * POST /api/kits
  * OC Member creates a new kit from scratch
- * Body: { name: string, items: [{ partId, qty }] }
  */
 router.post('/kits', (req, res) => {
   const { name, items } = req.body;
@@ -110,7 +149,6 @@ router.post('/kits', (req, res) => {
     return res.status(400).json({ error: 'Kit must include at least one part' });
   }
 
-  // Validate each part exists and has positive qty
   for (const item of items) {
     const part = db.parts.find((p) => p.id === item.partId);
     if (!part) {
@@ -139,7 +177,6 @@ router.post('/kits', (req, res) => {
 
 /**
  * PATCH /api/kits/:id
- * OC Member can modify kit contents
  */
 router.patch('/kits/:id', (req, res) => {
   const kit = db.kits.find((k) => k.id === req.params.id);

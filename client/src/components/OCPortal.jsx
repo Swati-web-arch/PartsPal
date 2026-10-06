@@ -13,7 +13,8 @@ export default function OCPortal({
   onMarkDefectiveReturn,
   onUpdateKit,
   onCreateKit,
-  onAddPart
+  onAddPart,
+  onUpdatePartStock
 }) {
   const [activeTab, setActiveTab] = useState('requests'); 
   // 'requests' | 'who-has-what' | 'kit-editor' | 'history'
@@ -41,12 +42,22 @@ export default function OCPortal({
   const [createKitSelectedQty, setCreateKitSelectedQty] = useState(1);
   const [createKitError, setCreateKitError] = useState('');
 
-  // Add new part state
+  // Inline part creation within Kit creation
+  const [inlineCreatePart, setInlineCreatePart] = useState(false);
+  const [inlinePartName, setInlinePartName] = useState('');
+  const [inlinePartCategory, setInlinePartCategory] = useState('Drivers');
+  const [inlinePartTotal, setInlinePartTotal] = useState(10);
+
+  // Add new part modal state
   const [showAddPartModal, setShowAddPartModal] = useState(false);
   const [newPartName, setNewPartName] = useState('');
   const [newPartCategory, setNewPartCategory] = useState('Sensors');
   const [newPartTotal, setNewPartTotal] = useState(10);
   const [newPartThreshold, setNewPartThreshold] = useState(2);
+
+  // Edit part stock state
+  const [editingPartStock, setEditingPartStock] = useState(null);
+  const [editTotalCount, setEditTotalCount] = useState(0);
 
   // Counts
   const pendingRequests = issues.filter((i) => i.status === 'pending');
@@ -125,8 +136,10 @@ export default function OCPortal({
     setCreateKitError('');
     setCreateKitSelectedPartId(parts[0]?.id || '');
     setCreateKitSelectedQty(1);
+    setInlineCreatePart(false);
   };
 
+  // Add existing part to new kit
   const handleAddItemToNewKit = () => {
     if (!createKitSelectedPartId) return;
     const partObj = parts.find((p) => p.id === createKitSelectedPartId);
@@ -146,6 +159,42 @@ export default function OCPortal({
           available: partObj ? partObj.available : 0
         }
       ]);
+    }
+  };
+
+  // Add Brand New Part On The Fly to New Kit
+  const handleAddInlinePartToNewKit = async () => {
+    if (!inlinePartName.trim()) {
+      setCreateKitError('Please provide a name for the new part.');
+      return;
+    }
+
+    try {
+      // 1. Create part in inventory
+      const createdPart = await onAddPart({
+        name: inlinePartName.trim(),
+        category: inlinePartCategory,
+        total: parseInt(inlinePartTotal, 10),
+        lowStockThreshold: 2
+      });
+
+      // 2. Add to kit list
+      setNewKitItems([
+        ...newKitItems,
+        {
+          partId: createdPart.id,
+          partName: createdPart.name,
+          qty: parseInt(createKitSelectedQty, 10),
+          available: createdPart.available
+        }
+      ]);
+
+      // Reset inline form
+      setInlinePartName('');
+      setInlineCreatePart(false);
+      setCreateKitSelectedPartId(createdPart.id);
+    } catch (err) {
+      setCreateKitError(err.message);
     }
   };
 
@@ -190,6 +239,16 @@ export default function OCPortal({
     });
     setShowAddPartModal(false);
     setNewPartName('');
+  };
+
+  // Update Part Stock Handler
+  const handleSavePartStock = async (e) => {
+    e.preventDefault();
+    if (!editingPartStock) return;
+    await onUpdatePartStock(editingPartStock.id, {
+      total: parseInt(editTotalCount, 10)
+    });
+    setEditingPartStock(null);
   };
 
   // History filtering
@@ -251,7 +310,7 @@ export default function OCPortal({
             className={`tab-btn ${activeTab === 'kit-editor' ? 'active' : ''}`}
             onClick={() => setActiveTab('kit-editor')}
           >
-            🧰 Customize Kits & Parts ({kits.length} Kits)
+            🧰 Customize Kits & Parts ({kits.length} Kits, {parts.length} Parts)
           </button>
           <button
             className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
@@ -412,10 +471,9 @@ export default function OCPortal({
         {/* 3. Customize Kits & Parts */}
         {activeTab === 'kit-editor' && (
           <div style={{ marginTop: '1rem' }}>
-            {/* Top Action Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
-                Manage or create kits and inventory parts. Changes update immediately for participants.
+                Manage or create kits, add new components, and set lab stock counts.
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button className="btn btn-secondary" onClick={() => setShowAddPartModal(true)}>
@@ -427,8 +485,9 @@ export default function OCPortal({
               </div>
             </div>
 
+            {/* Section A: Configured Kits */}
             <h2 style={{ fontSize: '1.15rem', marginBottom: '0.75rem', color: '#1e293b' }}>
-              Configured Kits
+              🚀 Kits Configured for Participants
             </h2>
             <div className="grid">
               {kits.map((kit) => (
@@ -443,7 +502,12 @@ export default function OCPortal({
                       <strong style={{ color: '#475569' }}>Contents:</strong>
                       <ul style={{ paddingLeft: '1.2rem', margin: '0.3rem 0 0 0' }}>
                         {kit.items.map((it, idx) => (
-                          <li key={idx}>{it.qty}x {it.partName}</li>
+                          <li key={idx}>
+                            {it.qty}x {it.partName}{' '}
+                            <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                              ({it.available} in stock)
+                            </span>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -460,6 +524,56 @@ export default function OCPortal({
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Section B: Parts Inventory & Stock Management */}
+            <div style={{ marginTop: '2.5rem' }}>
+              <h2 style={{ fontSize: '1.15rem', marginBottom: '0.75rem', color: '#1e293b' }}>
+                📦 Lab Parts Inventory (Set Owned Stock)
+              </h2>
+              <div className="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Part Name</th>
+                      <th>Category</th>
+                      <th>Available / Total Owned</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parts.map((p) => (
+                      <tr key={p.id}>
+                        <td><strong>{p.name}</strong></td>
+                        <td><span className="badge" style={{ background: '#f1f5f9', color: '#475569' }}>{p.category}</span></td>
+                        <td><strong>{p.available}</strong> / {p.total}</td>
+                        <td>
+                          {p.available === 0 ? (
+                            <span className="badge badge-low">Out of Stock</span>
+                          ) : p.isLowStock ? (
+                            <span className="badge badge-low">Low Stock</span>
+                          ) : (
+                            <span className="badge badge-success">In Stock</span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+                            onClick={() => {
+                              setEditingPartStock(p);
+                              setEditTotalCount(p.total);
+                            }}
+                          >
+                            ✏️ Edit Stock
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -533,7 +647,7 @@ export default function OCPortal({
         )}
       </main>
 
-      {/* Modal: Create Brand New Kit */}
+      {/* Modal: Create Brand New Kit (with Inline Part Creation) */}
       {showCreateKitModal && (
         <div className="modal-overlay" onClick={() => setShowCreateKitModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -541,7 +655,7 @@ export default function OCPortal({
               🚀 Create New Robotics Kit
             </h2>
             <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
-              Define a new bundled kit for participants to check out.
+              Define a kit and add components from inventory or create brand new components.
             </p>
 
             {createKitError && <div className="alert-error">{createKitError}</div>}
@@ -551,7 +665,7 @@ export default function OCPortal({
                 <label>Kit Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Bluetooth RC Car Kit, IoT Weather Station"
+                  placeholder="e.g. Bluetooth RC Car Kit, L298N Motor Driver Kit"
                   value={newKitName}
                   onChange={(e) => setNewKitName(e.target.value)}
                   required
@@ -561,11 +675,11 @@ export default function OCPortal({
               {/* Added components in new kit */}
               <div style={{ marginBottom: '1rem' }}>
                 <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem', color: '#334155' }}>
-                  Kit Components ({newKitItems.length}):
+                  Kit Components Added ({newKitItems.length}):
                 </strong>
                 {newKitItems.length === 0 ? (
                   <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center' }}>
-                    No parts added yet. Add below.
+                    No parts added yet. Add an existing part or create a new part below.
                   </div>
                 ) : (
                   newKitItems.map((it) => (
@@ -582,7 +696,7 @@ export default function OCPortal({
                         fontSize: '0.85rem'
                       }}
                     >
-                      <span><strong>{it.qty}x</strong> {it.partName}</span>
+                      <span><strong>{it.qty}x</strong> {it.partName} <small style={{ color: '#64748b' }}>({it.available} in lab)</small></span>
                       <button
                         type="button"
                         style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700 }}
@@ -595,38 +709,102 @@ export default function OCPortal({
                 )}
               </div>
 
-              {/* Add part selector */}
+              {/* Add Part Section */}
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginBottom: '1.5rem' }}>
-                <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
-                  + Add Component to this Kit:
-                </strong>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <select
-                    style={{ flex: 2, padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-                    value={createKitSelectedPartId}
-                    onChange={(e) => setCreateKitSelectedPartId(e.target.value)}
-                  >
-                    {parts.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.available} available)
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min="1"
-                    style={{ width: '60px', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                    value={createKitSelectedQty}
-                    onChange={(e) => setCreateKitSelectedQty(e.target.value)}
-                  />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <strong style={{ fontSize: '0.85rem' }}>+ Add Component:</strong>
                   <button
                     type="button"
-                    className="btn btn-secondary"
-                    onClick={handleAddItemToNewKit}
+                    style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setInlineCreatePart(!inlineCreatePart)}
                   >
-                    Add
+                    {inlineCreatePart ? '← Choose from Existing Parts' : '+ Create Brand New Part (e.g. L298N)'}
                   </button>
                 </div>
+
+                {!inlineCreatePart ? (
+                  /* Option 1: Pick from existing parts */
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <select
+                      style={{ flex: 2, padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      value={createKitSelectedPartId}
+                      onChange={(e) => setCreateKitSelectedPartId(e.target.value)}
+                    >
+                      {parts.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.available} available)
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="1"
+                      title="Quantity needed for this kit"
+                      style={{ width: '60px', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      value={createKitSelectedQty}
+                      onChange={(e) => setCreateKitSelectedQty(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleAddItemToNewKit}
+                    >
+                      Add
+                    </button>
+                  </div>
+                ) : (
+                  /* Option 2: Create brand new part right here! */
+                  <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Part name (e.g. L298N Motor Driver, Actuator)"
+                        value={inlinePartName}
+                        onChange={(e) => setInlinePartName(e.target.value)}
+                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      />
+                      <select
+                        value={inlinePartCategory}
+                        onChange={(e) => setInlinePartCategory(e.target.value)}
+                        style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                      >
+                        {['Drivers', 'Motors', 'Sensors', 'Microcontrollers', 'Actuators', 'Mechanical', 'Power'].map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ flex: 1, fontSize: '0.8rem', color: '#475569' }}>
+                        Lab Total Stock:
+                        <input
+                          type="number"
+                          min="1"
+                          value={inlinePartTotal}
+                          onChange={(e) => setInlinePartTotal(e.target.value)}
+                          style={{ width: '60px', marginLeft: '0.3rem', padding: '0.3rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, fontSize: '0.8rem', color: '#475569' }}>
+                        Qty in Kit:
+                        <input
+                          type="number"
+                          min="1"
+                          value={createKitSelectedQty}
+                          onChange={(e) => setCreateKitSelectedQty(e.target.value)}
+                          style={{ width: '50px', marginLeft: '0.3rem', padding: '0.3rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                        onClick={handleAddInlinePartToNewKit}
+                      >
+                        Save & Add
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
@@ -646,6 +824,46 @@ export default function OCPortal({
         </div>
       )}
 
+      {/* Modal: Edit Existing Part Lab Stock */}
+      {editingPartStock && (
+        <div className="modal-overlay" onClick={() => setEditingPartStock(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+              Adjust Lab Stock: {editingPartStock.name}
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Currently {editingPartStock.available} available out of {editingPartStock.total} total owned.
+            </p>
+
+            <form onSubmit={handleSavePartStock}>
+              <div className="form-group">
+                <label>Total Units Owned by Lab *</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editTotalCount}
+                  onChange={(e) => setEditTotalCount(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setEditingPartStock(null)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Stock Count
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal: Add New Inventory Part */}
       {showAddPartModal && (
         <div className="modal-overlay" onClick={() => setShowAddPartModal(false)}>
@@ -656,7 +874,7 @@ export default function OCPortal({
                 <label>Part Name *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Raspberry Pi 4, MPU6050 Gyro"
+                  placeholder="e.g. L298N Dual Motor Driver, Linear Actuator"
                   value={newPartName}
                   onChange={(e) => setNewPartName(e.target.value)}
                   required
@@ -665,13 +883,13 @@ export default function OCPortal({
               <div className="form-group">
                 <label>Category *</label>
                 <select value={newPartCategory} onChange={(e) => setNewPartCategory(e.target.value)}>
-                  {['Sensors', 'Microcontrollers', 'Motors', 'Drivers', 'Mechanical', 'Power'].map((c) => (
+                  {['Drivers', 'Actuators', 'Sensors', 'Microcontrollers', 'Motors', 'Mechanical', 'Power'].map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Total Inventory *</label>
+                <label>Total Inventory Owned *</label>
                 <input
                   type="number"
                   min="1"
@@ -681,7 +899,7 @@ export default function OCPortal({
                 />
               </div>
               <div className="form-group">
-                <label>Low Stock Threshold</label>
+                <label>Low Stock Warning Threshold</label>
                 <input
                   type="number"
                   min="0"
@@ -694,7 +912,7 @@ export default function OCPortal({
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Add Part
+                  Add to Inventory
                 </button>
               </div>
             </form>
@@ -765,10 +983,9 @@ export default function OCPortal({
               Customizing: {editingKit.name}
             </h2>
             <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
-              Add or remove parts (e.g. Wheels). Updated contents appear immediately on the Participant portal.
+              Add or remove parts. Updated contents appear immediately on the Participant portal.
             </p>
 
-            {/* Current items in kit */}
             <div style={{ marginBottom: '1.5rem' }}>
               <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                 Current Items in Kit:
@@ -799,7 +1016,6 @@ export default function OCPortal({
               ))}
             </div>
 
-            {/* Add Part to Kit */}
             <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginBottom: '1rem' }}>
               <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                 + Add Part to this Kit:
@@ -812,7 +1028,7 @@ export default function OCPortal({
                 >
                   {parts.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      {p.name} ({p.available} available)
                     </option>
                   ))}
                 </select>
