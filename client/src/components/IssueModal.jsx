@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 export default function IssueModal({ target, onClose, onSubmit }) {
   const [memberName, setMemberName] = useState('');
   const [regNo, setRegNo] = useState('');
+  const [pickupCode, setPickupCode] = useState(null);
+
   // Default due date to tomorrow at 5:00 PM
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -39,8 +41,8 @@ export default function IssueModal({ target, onClose, onSubmit }) {
         payload.qty = parseInt(qty, 10);
       }
 
-      await onSubmit(payload);
-      onClose();
+      const result = await onSubmit(payload);
+      setPickupCode(result.code);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,21 +50,54 @@ export default function IssueModal({ target, onClose, onSubmit }) {
     }
   };
 
+  // If request has been created, show the pickup code screen!
+  if (pickupCode) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🎉</div>
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>Request Submitted!</h2>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            Show this pickup code to the lab assistant to receive your items:
+          </p>
+          <div
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              letterSpacing: '2px',
+              background: '#eff6ff',
+              color: '#2563eb',
+              padding: '1rem',
+              borderRadius: '8px',
+              border: '2px dashed #93c5fd',
+              marginBottom: '1.5rem'
+            }}
+          >
+            {pickupCode}
+          </div>
+          <button className="btn btn-primary" style={{ width: '100%' }} onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 style={{ marginBottom: '0.5rem', fontSize: '1.25rem' }}>
-          Issue {target.type === 'kit' ? 'Kit' : 'Part'}
+          Request {target.type === 'kit' ? 'Kit' : 'Part'}
         </h2>
         <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
-          Assigning <strong>{target.item.name}</strong> to a member.
+          Requesting <strong>{target.item.name}</strong> from the lab.
         </p>
 
         {error && <div className="alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Member Name *</label>
+            <label>Student Name *</label>
             <input
               type="text"
               placeholder="e.g. Alex Rivera"
@@ -84,7 +119,7 @@ export default function IssueModal({ target, onClose, onSubmit }) {
           </div>
 
           <div className="form-group">
-            <label>Due Date & Time *</label>
+            <label>Expected Return Date & Time *</label>
             <input
               type="datetime-local"
               value={dueDate}
@@ -112,7 +147,7 @@ export default function IssueModal({ target, onClose, onSubmit }) {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Processing...' : 'Confirm Issue'}
+              {loading ? 'Submitting...' : 'Submit Request'}
             </button>
           </div>
         </form>

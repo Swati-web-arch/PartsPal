@@ -38,14 +38,32 @@ export async function fetchIssues(status = '', regNo = '') {
   return res.json();
 }
 
-export async function issueItem(payload) {
+export async function submitRequest(payload) {
   const res = await fetch(`${API_BASE}/issues`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to issue item');
+  if (!res.ok) throw new Error(data.error || 'Failed to submit request');
+  return data;
+}
+
+export async function approveRequest(issueId) {
+  const res = await fetch(`${API_BASE}/issues/${issueId}/approve`, {
+    method: 'POST'
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to approve request');
+  return data;
+}
+
+export async function rejectRequest(issueId) {
+  const res = await fetch(`${API_BASE}/issues/${issueId}/reject`, {
+    method: 'POST'
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to reject request');
   return data;
 }
 

@@ -4,12 +4,15 @@ import {
   fetchParts,
   fetchKits,
   fetchIssues,
-  issueItem,
+  submitRequest,
+  approveRequest,
+  rejectRequest,
   markReturned,
   addPart
 } from './api';
 import InventoryView from './components/InventoryView';
 import KitsView from './components/KitsView';
+import PendingQueueView from './components/PendingQueueView';
 import WhoHasWhatView from './components/WhoHasWhatView';
 import HistoryView from './components/HistoryView';
 import IssueModal from './components/IssueModal';
@@ -26,17 +29,15 @@ export default function App() {
   const [notification, setNotification] = useState(null);
 
   // Modals state
-  const [issueTarget, setIssueTarget] = useState(null); // { type: 'part'|'kit', item: {...} }
+  const [issueTarget, setIssueTarget] = useState(null);
   const [showAddPart, setShowAddPart] = useState(false);
   const [loadingReturnId, setLoadingReturnId] = useState(null);
 
-  // Notification helper
   const showMessage = (msg, type = 'success') => {
     setNotification({ msg, type });
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => setNotification(null), 5000);
   };
 
-  // Load all initial data
   const loadData = async () => {
     try {
       const [partsData, kitsData, issuesData] = await Promise.all([
@@ -58,14 +59,37 @@ export default function App() {
     loadData();
   }, [search, category]);
 
-  // Handle issuing item or kit
-  const handleIssueSubmit = async (payload) => {
-    const result = await issueItem(payload);
-    showMessage(`Issued ${result.title} to ${result.memberName} successfully!`);
+  // Student submits request
+  const handleRequestSubmit = async (payload) => {
+    const result = await submitRequest(payload);
+    showMessage(`Request submitted! Pickup code: ${result.code}`);
     await loadData();
+    return result;
   };
 
-  // Handle return
+  // Assistant approves request
+  const handleApprove = async (id) => {
+    try {
+      const result = await approveRequest(id);
+      showMessage(`Approved ${result.title} for ${result.memberName}! Stock updated.`);
+      await loadData();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    }
+  };
+
+  // Assistant rejects request
+  const handleReject = async (id) => {
+    try {
+      const result = await rejectRequest(id);
+      showMessage(`Request ${result.code} rejected.`, 'error');
+      await loadData();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    }
+  };
+
+  // Assistant marks return
   const handleMarkReturn = async (issueId) => {
     setLoadingReturnId(issueId);
     try {
@@ -79,13 +103,14 @@ export default function App() {
     }
   };
 
-  // Handle adding part
+  // Add part
   const handleAddPart = async (newPartData) => {
     const created = await addPart(newPartData);
     showMessage(`Added ${created.name} to inventory!`);
     await loadData();
   };
 
+  const pendingCount = issues.filter((i) => i.status === 'pending').length;
   const activeIssuesCount = issues.filter((i) => i.status === 'issued').length;
   const overdueCount = issues.filter((i) => i.status === 'issued' && i.isOverdue).length;
 
@@ -110,6 +135,27 @@ export default function App() {
               onClick={() => setActiveTab('kits')}
             >
               Kits ({kits.length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+              onClick={() => setActiveTab('pending')}
+            >
+              Pending Requests
+              {pendingCount > 0 && (
+                <span
+                  style={{
+                    marginLeft: '0.4rem',
+                    background: '#f59e0b',
+                    color: '#fff',
+                    borderRadius: '10px',
+                    padding: '0.1rem 0.45rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700
+                  }}
+                >
+                  {pendingCount}
+                </span>
+              )}
             </button>
             <button
               className={`tab-btn ${activeTab === 'who-has-what' ? 'active' : ''}`}
@@ -143,7 +189,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="container">
-        {/* Banner Alert */}
         {notification && (
           <div
             style={{
@@ -183,6 +228,14 @@ export default function App() {
               <KitsView kits={kits} onOpenIssueModal={setIssueTarget} />
             )}
 
+            {activeTab === 'pending' && (
+              <PendingQueueView
+                issues={issues}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            )}
+
             {activeTab === 'who-has-what' && (
               <WhoHasWhatView
                 issues={issues}
@@ -196,16 +249,14 @@ export default function App() {
         )}
       </main>
 
-      {/* Issue Modal */}
       {issueTarget && (
         <IssueModal
           target={issueTarget}
           onClose={() => setIssueTarget(null)}
-          onSubmit={handleIssueSubmit}
+          onSubmit={handleRequestSubmit}
         />
       )}
 
-      {/* Add Part Modal */}
       {showAddPart && (
         <AddPartModal
           onClose={() => setShowAddPart(false)}
