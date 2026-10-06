@@ -1,6 +1,7 @@
 // client/src/components/OCPortal.jsx
 import React, { useState } from 'react';
 import QRCodeModal from './QRCodeModal';
+import QRScannerModal from './QRScannerModal';
 import { getDueStatus } from '../utils/time';
 
 export default function OCPortal({
@@ -63,6 +64,9 @@ export default function OCPortal({
   // Edit part stock state
   const [editingPartStock, setEditingPartStock] = useState(null);
   const [editTotalCount, setEditTotalCount] = useState(0);
+
+  // QR Scanner state
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   // Counts & Stats
   const pendingRequests = issues.filter((i) => i.status === 'pending');
@@ -369,9 +373,18 @@ export default function OCPortal({
         {/* 1. Requests Queue */}
         {activeTab === 'requests' && (
           <div style={{ marginTop: '1rem' }}>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
               Pending requests submitted by participants. Approve will decrement stock atomically with all-or-nothing validation.
             </p>
+            <button
+              className="btn btn-primary"
+              style={{ whiteSpace: 'nowrap' }}
+              onClick={() => setShowQRScanner(true)}
+            >
+              📷 Scan Participant QR
+            </button>
+          </div>
 
             {pendingRequests.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b' }}>
@@ -1139,6 +1152,24 @@ export default function OCPortal({
           value={qrModalData.value}
           subtitle={qrModalData.subtitle}
           onClose={() => setQrModalData(null)}
+        />
+      )}
+
+      {/* QR Scanner Modal — scan participant's pickup code */}
+      {showQRScanner && (
+        <QRScannerModal
+          issues={issues}
+          onApprove={async (id) => {
+            setProcessingId(id);
+            await onApprove(id);
+            setProcessingId(null);
+          }}
+          onReject={async (id) => {
+            setProcessingId(id);
+            await onReject(id);
+            setProcessingId(null);
+          }}
+          onClose={() => setShowQRScanner(false)}
         />
       )}
     </div>
