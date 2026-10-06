@@ -1,14 +1,11 @@
 // server/src/routes/inventory.js
 import express from 'express';
-import { db } from '../db.js';
+import { db, logEvent } from '../db.js';
 
 const router = express.Router();
 
 /**
  * GET /api/parts
- * Query params (optional):
- * - search: string (filters name case-insensitively)
- * - category: string (filters by category)
  */
 router.get('/parts', (req, res) => {
   const { search, category } = req.query;
@@ -25,7 +22,6 @@ router.get('/parts', (req, res) => {
     results = results.filter((p) => p.name.toLowerCase().includes(q));
   }
 
-  // Add low-stock flag (Stretch Goal: Low-stock warnings)
   const formatted = results.map((part) => ({
     ...part,
     isLowStock: part.available <= (part.lowStockThreshold || 0)
@@ -36,8 +32,6 @@ router.get('/parts', (req, res) => {
 
 /**
  * POST /api/parts
- * Add a new part to inventory
- * Body: { name, category, total, lowStockThreshold }
  */
 router.post('/parts', (req, res) => {
   const { name, category, total, lowStockThreshold } = req.body;
@@ -45,7 +39,6 @@ router.post('/parts', (req, res) => {
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Part name is required' });
   }
-
   if (!category || !category.trim()) {
     return res.status(400).json({ error: 'Category is required' });
   }
@@ -67,16 +60,15 @@ router.post('/parts', (req, res) => {
   };
 
   db.parts.push(newPart);
+  logEvent('PART_CREATED', 'oc', newPart.id, { name: newPart.name });
   res.status(201).json(newPart);
 });
 
 /**
  * GET /api/kits
- * Fetch all kits with detailed part information and how many can be issued
  */
 router.get('/kits', (req, res) => {
   const detailedKits = db.kits.map((kit) => {
-    // Attach part details to each item in kit
     const itemsWithDetails = kit.items.map((item) => {
       const part = db.parts.find((p) => p.id === item.partId);
       return {
@@ -87,10 +79,9 @@ router.get('/kits', (req, res) => {
       };
     });
 
-    // Calculate how many complete kits can currently be assembled
-    const maxCanIssue = Math.min(
-      ...itemsWithDetails.map((item) => Math.floor(item.available / item.qty))
-    );
+    const maxCanIssue = itemsWithDetails.length > 0
+      ? Math.min(...itemsWithDetails.map((item) => Math.floor(item.available / item.qty)))
+      : 0;
 
     return {
       id: kit.id,
@@ -101,6 +92,37 @@ router.get('/kits', (req, res) => {
   });
 
   res.json(detailedKits);
+});
+
+/**
+ * PATCH /api/kits/:id
+ * OC Member can modify kit contents (e.g. add wheels, change items)
+ * Body: { items: [{ partId, qty }] } or { name, items }
+ */
+router.patch('/kits/:id', (req, res) => {
+  const kit = db.kits.find((k) => k.id === req.params.id);
+  if (!kit) {
+    return res.status(404).json({ error: 'Kit not found' });
+  }
+
+  const { name, items } = req.body;
+  if (name) kit.name = name.trim();
+  if (items && Array.isArray(items)) {
+    // Validate each part exists and qty is positive integer
+    for (const item of items) {
+      const part = db.parts.find((p) => p.id === item.partId);
+      if (!part) {
+        return res.status(400).json({ error: `Part ${item.partId} does not exist in inventory` });
+      }
+      if (!item.qty || item.qty <= 0) {
+        return res.status(400).json({ error: `Quantity for ${part.name} must be a positive integer` });
+      }
+    }
+    kit.items = items;
+  }
+
+  logEvent('KIT_UPDATED', 'oc', kit.id, { name: kit.name, items: kit.items });
+  res.json(kit);
 });
 
 export default router;

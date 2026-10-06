@@ -1,8 +1,8 @@
 // server/src/db.js
-// In-memory data store strictly adhering to PS-05 PartsPal specifications.
+// In-memory data store for PartsPal-1 with dynamic kits, defective management, and audit logging.
 
 export const db = {
-  // Inventory parts with total and available counts, plus low-stock threshold for warnings
+  // Inventory parts
   parts: [
     {
       id: 'p1',
@@ -30,20 +30,27 @@ export const db = {
     },
     {
       id: 'p4',
-      name: 'Micro Servo 9g',
-      category: 'Motors',
+      name: 'Wheels of Robotic Car (Pair)',
+      category: 'Mechanical',
       total: 8,
       available: 8,
+      lowStockThreshold: 2
+    },
+    {
+      id: 'p5',
+      name: 'Micro Servo 9g',
+      category: 'Motors',
+      total: 6,
+      available: 6,
       lowStockThreshold: 2
     }
   ],
 
-  // Kits: collections of parts issued as a bundle
-  // Tested specifically: "line-follower kit with an Arduino, two IR sensors and a motor driver"
+  // Kits: configurable bundles of parts
   kits: [
     {
       id: 'k1',
-      name: 'Line-Follower Kit',
+      name: 'Robotic Car Line-Follower Kit',
       items: [
         { partId: 'p1', qty: 1 }, // 1x Arduino Uno
         { partId: 'p2', qty: 2 }, // 2x IR Sensors
@@ -52,6 +59,22 @@ export const db = {
     }
   ],
 
-  // Track who has what (borrowed items, status: 'issued' | 'returned')
-  issues: []
+  // Checkout and return issue records
+  issues: [],
+
+  // Append-only audit logs
+  auditLogs: []
 };
+
+export function logEvent(action, actor, targetId, details = {}) {
+  const event = {
+    id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    action,
+    actor: actor || 'system',
+    targetId,
+    details
+  };
+  db.auditLogs.push(event);
+  return event;
+}

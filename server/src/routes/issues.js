@@ -6,21 +6,20 @@ const router = express.Router();
 
 /**
  * POST /api/issues
- * Student submits a request for a kit or a part.
- * Stock DOES NOT decrement yet! Status starts as 'pending'.
- * Generates a pickup code (e.g. K-4821).
+ * Student submits checkout request
+ * Body: { memberName, regNo, borrowingAt, dueDate, type: 'part'|'kit', kitId, partId, qty }
  */
 router.post('/issues', (req, res) => {
-  const { memberName, regNo, dueDate, type, partId, qty, kitId } = req.body;
+  const { memberName, regNo, borrowingAt, dueDate, type, partId, qty, kitId } = req.body;
 
   if (!memberName || !memberName.trim()) {
-    return res.status(400).json({ error: 'Student name is required' });
+    return res.status(400).json({ error: 'Name is required' });
   }
   if (!regNo || !regNo.trim()) {
     return res.status(400).json({ error: 'Registration number is required' });
   }
   if (!dueDate) {
-    return res.status(400).json({ error: 'Expected return date/time is required' });
+    return res.status(400).json({ error: 'Expected return date & time is required' });
   }
 
   const cleanRegNo = regNo.trim().toUpperCase();
@@ -75,8 +74,10 @@ router.post('/issues', (req, res) => {
     lines,
     memberName: cleanMemberName,
     regNo: cleanRegNo,
+    borrowingAt: borrowingAt || new Date().toISOString(),
     dueDate,
-    status: 'pending', // Awaiting assistant approval
+    status: 'pending',
+    condition: 'good',
     requestedAt: new Date().toISOString(),
     issuedAt: null,
     returnedAt: null
@@ -90,8 +91,7 @@ router.post('/issues', (req, res) => {
 
 /**
  * POST /api/issues/:id/approve
- * Assistant approves a pending request.
- * Stock is decremented HERE with all-or-nothing verification!
+ * OC approves request with all-or-nothing check
  */
 router.post('/issues/:id/approve', (req, res) => {
   const issue = db.issues.find((i) => i.id === req.params.id);
@@ -126,7 +126,7 @@ router.post('/issues/:id/approve', (req, res) => {
     });
   }
 
-  // Stock available! Decrement stock now
+  // Stock confirmed, decrement now
   for (const line of issue.lines) {
     const part = db.parts.find((p) => p.id === line.partId);
     part.available -= line.qty;
@@ -134,14 +134,14 @@ router.post('/issues/:id/approve', (req, res) => {
 
   issue.status = 'issued';
   issue.issuedAt = new Date().toISOString();
-  logEvent('REQUEST_APPROVED', 'assistant', issue.id, { title: issue.title, regNo: issue.regNo });
+  logEvent('REQUEST_APPROVED', 'oc', issue.id, { title: issue.title, regNo: issue.regNo });
 
   res.json(issue);
 });
 
 /**
  * POST /api/issues/:id/reject
- * Assistant rejects a pending request.
+ * OC rejects request
  */
 router.post('/issues/:id/reject', (req, res) => {
   const issue = db.issues.find((i) => i.id === req.params.id);
@@ -154,14 +154,14 @@ router.post('/issues/:id/reject', (req, res) => {
   }
 
   issue.status = 'rejected';
-  logEvent('REQUEST_REJECTED', 'assistant', issue.id, { title: issue.title, regNo: issue.regNo });
+  logEvent('REQUEST_REJECTED', 'oc', issue.id, { title: issue.title, regNo: issue.regNo });
 
   res.json(issue);
 });
 
 /**
  * PATCH /api/issues/:id/return
- * Assistant verifies return and restores stock to inventory
+ * Standard return (all parts good condition)
  */
 router.patch('/issues/:id/return', (req, res) => {
   const issue = db.issues.find((i) => i.id === req.params.id);
@@ -170,14 +170,9 @@ router.patch('/issues/:id/return', (req, res) => {
   }
 
   if (issue.status === 'returned') {
-    return res.status(400).json({ error: 'This issue has already been marked as returned' });
+    return res.status(400).json({ error: 'This issue is already marked returned' });
   }
 
-  if (issue.status !== 'issued') {
-    return res.status(400).json({ error: `Cannot return an item with status "${issue.status}"` });
-  }
-
-  // Restore inventory stock
   for (const line of issue.lines) {
     const part = db.parts.find((p) => p.id === line.partId);
     if (part) {
@@ -186,15 +181,119 @@ router.patch('/issues/:id/return', (req, res) => {
   }
 
   issue.status = 'returned';
+  issue.condition = 'good';
   issue.returnedAt = new Date().toISOString();
-  logEvent('RETURN_VERIFIED', 'assistant', issue.id, { title: issue.title, regNo: issue.regNo });
+  logEvent('RETURN_VERIFIED', 'oc', issue.id, { title: issue.title, regNo: issue.regNo });
 
   res.json(issue);
 });
 
 /**
+ * POST /api/issues/:id/return-defective
+ * Return a defective kit and immediately issue a fresh replacement kit to the participant!
+ * Body: { defectiveNote, defectivePartId }
+ */
+router.post('/issues/:id/return-defective', (req, res) => {
+  const { defectiveNote, defectivePartId } = req.body;
+  const issue = db.issues.find((i) => i.id === req.params.id);
+
+  if (!issue) {
+    return res.status(404).json({ error: 'Issue record not found' });
+  }
+
+  if (issue.status !== 'issued') {
+    return res.status(400).json({ error: 'Only actively issued items can be processed for defective return' });
+  }
+
+  // 1. Mark original issue as returned with defective note
+  issue.status = 'returned';
+  issue.condition = 'defective';
+  issue.defectiveNote = defectiveNote || 'Returned with defective components';
+  issue.returnedAt = new Date().toISOString();
+
+  // 2. Restock only non-defective parts; defective part reduces total lab count
+  for (const line of issue.lines) {
+    const part = db.parts.find((p) => p.id === line.partId);
+    if (part) {
+      if (defectivePartId && part.id === defectivePartId) {
+        // Part is damaged/scrapped: reduces total inventory count
+        if (part.total > 0) part.total -= 1;
+      } else {
+        // Non-defective parts get restored to available
+        part.available += line.qty;
+      }
+    }
+  }
+
+  logEvent('RETURN_DEFECTIVE', 'oc', issue.id, {
+    regNo: issue.regNo,
+    note: issue.defectiveNote,
+    defectivePartId
+  });
+
+  // 3. Immediately issue a fresh replacement kit to this participant (if it was a kit)
+  let replacementIssue = null;
+  if (issue.type === 'kit' && issue.kitId) {
+    const kit = db.kits.find((k) => k.id === issue.kitId);
+    if (kit) {
+      // Check if replacement can be issued
+      const canIssue = kit.items.every((item) => {
+        const part = db.parts.find((p) => p.id === item.partId);
+        return part && part.available >= item.qty;
+      });
+
+      if (canIssue) {
+        // Decrement stock for replacement
+        const replacementLines = [];
+        for (const item of kit.items) {
+          const part = db.parts.find((p) => p.id === item.partId);
+          part.available -= item.qty;
+          replacementLines.push({
+            partId: part.id,
+            partName: part.name,
+            qty: item.qty
+          });
+        }
+
+        const newCode = 'K-' + Math.floor(1000 + Math.random() * 9000);
+        replacementIssue = {
+          id: `issue-${Date.now()}-repl`,
+          code: newCode,
+          type: 'kit',
+          kitId: kit.id,
+          title: `${kit.name} (Replacement)`,
+          lines: replacementLines,
+          memberName: issue.memberName,
+          regNo: issue.regNo,
+          borrowingAt: new Date().toISOString(),
+          dueDate: issue.dueDate,
+          status: 'issued', // Immediately approved and issued
+          condition: 'good',
+          requestedAt: new Date().toISOString(),
+          issuedAt: new Date().toISOString(),
+          returnedAt: null,
+          replacedIssueId: issue.id
+        };
+
+        db.issues.push(replacementIssue);
+        logEvent('REPLACEMENT_ISSUED', 'oc', replacementIssue.id, {
+          forIssueId: issue.id,
+          code: newCode,
+          regNo: issue.regNo
+        });
+      }
+    }
+  }
+
+  res.json({
+    message: 'Defective return processed successfully',
+    oldIssue: issue,
+    replacementIssue
+  });
+});
+
+/**
  * GET /api/issues
- * List issues with overdue status calculation
  */
 router.get('/issues', (req, res) => {
   const { status, regNo } = req.query;

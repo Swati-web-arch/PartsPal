@@ -1,6 +1,17 @@
 // client/src/api.js
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+export async function loginUser(credentials) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Authentication failed');
+  return data;
+}
+
 export async function fetchParts(search = '', category = 'All') {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
@@ -26,6 +37,17 @@ export async function fetchKits() {
   const res = await fetch(`${API_BASE}/kits`);
   if (!res.ok) throw new Error('Failed to fetch kits');
   return res.json();
+}
+
+export async function updateKit(kitId, payload) {
+  const res = await fetch(`${API_BASE}/kits/${kitId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update kit');
+  return data;
 }
 
 export async function fetchIssues(status = '', regNo = '') {
@@ -73,5 +95,16 @@ export async function markReturned(issueId) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to mark return');
+  return data;
+}
+
+export async function markDefectiveReturn(issueId, payload) {
+  const res = await fetch(`${API_BASE}/issues/${issueId}/return-defective`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to process defective return');
   return data;
 }
