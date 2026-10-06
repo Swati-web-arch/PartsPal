@@ -10,6 +10,7 @@ import {
   markReturned,
   markDefectiveReturn,
   updateKit,
+  createKit,
   addPart
 } from './api';
 import AuthScreen from './components/AuthScreen';
@@ -123,7 +124,19 @@ export default function App() {
     }
   };
 
-  // OC updates kit (e.g. adding wheels)
+  // OC creates new kit
+  const handleCreateKit = async (kitData) => {
+    try {
+      const result = await createKit(kitData);
+      showMessage(`Created kit "${result.name}" successfully!`);
+      await loadAllData();
+    } catch (err) {
+      showMessage(err.message, 'error');
+      throw err;
+    }
+  };
+
+  // OC updates existing kit
   const handleUpdateKit = async (kitId, payload) => {
     try {
       const result = await updateKit(kitId, payload);
@@ -194,6 +207,7 @@ export default function App() {
           onMarkReturn={handleMarkReturn}
           onMarkDefectiveReturn={handleMarkDefectiveReturn}
           onUpdateKit={handleUpdateKit}
+          onCreateKit={handleCreateKit}
           onAddPart={handleAddPart}
         />
       )}

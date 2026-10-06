@@ -12,6 +12,7 @@ export default function OCPortal({
   onMarkReturn,
   onMarkDefectiveReturn,
   onUpdateKit,
+  onCreateKit,
   onAddPart
 }) {
   const [activeTab, setActiveTab] = useState('requests'); 
@@ -26,11 +27,26 @@ export default function OCPortal({
   const [defectivePartId, setDefectivePartId] = useState('');
   const [defectiveLoading, setDefectiveLoading] = useState(false);
 
-  // Kit editor state
+  // Edit existing kit state
   const [editingKit, setEditingKit] = useState(null);
   const [kitItems, setKitItems] = useState([]);
   const [selectedAddPartId, setSelectedAddPartId] = useState('');
   const [selectedAddQty, setSelectedAddQty] = useState(1);
+
+  // Create new kit state
+  const [showCreateKitModal, setShowCreateKitModal] = useState(false);
+  const [newKitName, setNewKitName] = useState('');
+  const [newKitItems, setNewKitItems] = useState([]);
+  const [createKitSelectedPartId, setCreateKitSelectedPartId] = useState('');
+  const [createKitSelectedQty, setCreateKitSelectedQty] = useState(1);
+  const [createKitError, setCreateKitError] = useState('');
+
+  // Add new part state
+  const [showAddPartModal, setShowAddPartModal] = useState(false);
+  const [newPartName, setNewPartName] = useState('');
+  const [newPartCategory, setNewPartCategory] = useState('Sensors');
+  const [newPartTotal, setNewPartTotal] = useState(10);
+  const [newPartThreshold, setNewPartThreshold] = useState(2);
 
   // Counts
   const pendingRequests = issues.filter((i) => i.status === 'pending');
@@ -101,6 +117,81 @@ export default function OCPortal({
     setEditingKit(null);
   };
 
+  // Create Kit Handlers
+  const handleOpenCreateKit = () => {
+    setShowCreateKitModal(true);
+    setNewKitName('');
+    setNewKitItems([]);
+    setCreateKitError('');
+    setCreateKitSelectedPartId(parts[0]?.id || '');
+    setCreateKitSelectedQty(1);
+  };
+
+  const handleAddItemToNewKit = () => {
+    if (!createKitSelectedPartId) return;
+    const partObj = parts.find((p) => p.id === createKitSelectedPartId);
+    const existingIndex = newKitItems.findIndex((it) => it.partId === createKitSelectedPartId);
+
+    if (existingIndex > -1) {
+      const updated = [...newKitItems];
+      updated[existingIndex].qty += parseInt(createKitSelectedQty, 10);
+      setNewKitItems(updated);
+    } else {
+      setNewKitItems([
+        ...newKitItems,
+        {
+          partId: createKitSelectedPartId,
+          partName: partObj ? partObj.name : 'Unknown Part',
+          qty: parseInt(createKitSelectedQty, 10),
+          available: partObj ? partObj.available : 0
+        }
+      ]);
+    }
+  };
+
+  const handleRemoveItemFromNewKit = (partId) => {
+    setNewKitItems(newKitItems.filter((it) => it.partId !== partId));
+  };
+
+  const handleSaveNewKit = async (e) => {
+    e.preventDefault();
+    setCreateKitError('');
+
+    if (!newKitName.trim()) {
+      setCreateKitError('Please provide a name for the new kit.');
+      return;
+    }
+
+    if (newKitItems.length === 0) {
+      setCreateKitError('Please add at least one component to the kit.');
+      return;
+    }
+
+    try {
+      await onCreateKit({
+        name: newKitName.trim(),
+        items: newKitItems.map((it) => ({ partId: it.partId, qty: it.qty }))
+      });
+      setShowCreateKitModal(false);
+    } catch (err) {
+      setCreateKitError(err.message);
+    }
+  };
+
+  // Add Part Handlers
+  const handleSaveNewPart = async (e) => {
+    e.preventDefault();
+    if (!newPartName.trim()) return;
+    await onAddPart({
+      name: newPartName.trim(),
+      category: newPartCategory,
+      total: parseInt(newPartTotal, 10),
+      lowStockThreshold: parseInt(newPartThreshold, 10)
+    });
+    setShowAddPartModal(false);
+    setNewPartName('');
+  };
+
   // History filtering
   const filteredHistory = issues.filter((i) => {
     if (!searchRegNo.trim()) return true;
@@ -160,7 +251,7 @@ export default function OCPortal({
             className={`tab-btn ${activeTab === 'kit-editor' ? 'active' : ''}`}
             onClick={() => setActiveTab('kit-editor')}
           >
-            🧰 Customize Kits & Parts
+            🧰 Customize Kits & Parts ({kits.length} Kits)
           </button>
           <button
             className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
@@ -321,10 +412,24 @@ export default function OCPortal({
         {/* 3. Customize Kits & Parts */}
         {activeTab === 'kit-editor' && (
           <div style={{ marginTop: '1rem' }}>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Modify components inside kits (e.g. add Wheels of robotic car). Changes appear instantly on the participant page.
-            </p>
+            {/* Top Action Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+                Manage or create kits and inventory parts. Changes update immediately for participants.
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-secondary" onClick={() => setShowAddPartModal(true)}>
+                  + Add New Part
+                </button>
+                <button className="btn btn-primary" onClick={handleOpenCreateKit}>
+                  + Create New Kit
+                </button>
+              </div>
+            </div>
 
+            <h2 style={{ fontSize: '1.15rem', marginBottom: '0.75rem', color: '#1e293b' }}>
+              Configured Kits
+            </h2>
             <div className="grid">
               {kits.map((kit) => (
                 <div key={kit.id} className="card">
@@ -346,7 +451,7 @@ export default function OCPortal({
 
                   <div style={{ marginTop: '1rem' }}>
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       style={{ width: '100%' }}
                       onClick={() => handleOpenKitEditor(kit)}
                     >
@@ -427,6 +532,175 @@ export default function OCPortal({
           </div>
         )}
       </main>
+
+      {/* Modal: Create Brand New Kit */}
+      {showCreateKitModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateKitModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+              🚀 Create New Robotics Kit
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Define a new bundled kit for participants to check out.
+            </p>
+
+            {createKitError && <div className="alert-error">{createKitError}</div>}
+
+            <form onSubmit={handleSaveNewKit}>
+              <div className="form-group">
+                <label>Kit Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Bluetooth RC Car Kit, IoT Weather Station"
+                  value={newKitName}
+                  onChange={(e) => setNewKitName(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Added components in new kit */}
+              <div style={{ marginBottom: '1rem' }}>
+                <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem', color: '#334155' }}>
+                  Kit Components ({newKitItems.length}):
+                </strong>
+                {newKitItems.length === 0 ? (
+                  <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center' }}>
+                    No parts added yet. Add below.
+                  </div>
+                ) : (
+                  newKitItems.map((it) => (
+                    <div
+                      key={it.partId}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.45rem 0.6rem',
+                        background: '#f8fafc',
+                        borderRadius: '6px',
+                        marginBottom: '0.35rem',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      <span><strong>{it.qty}x</strong> {it.partName}</span>
+                      <button
+                        type="button"
+                        style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700 }}
+                        onClick={() => handleRemoveItemFromNewKit(it.partId)}
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add part selector */}
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginBottom: '1.5rem' }}>
+                <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+                  + Add Component to this Kit:
+                </strong>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <select
+                    style={{ flex: 2, padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                    value={createKitSelectedPartId}
+                    onChange={(e) => setCreateKitSelectedPartId(e.target.value)}
+                  >
+                    {parts.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.available} available)
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    style={{ width: '60px', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    value={createKitSelectedQty}
+                    onChange={(e) => setCreateKitSelectedQty(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleAddItemToNewKit}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateKitModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create & Publish Kit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add New Inventory Part */}
+      {showAddPartModal && (
+        <div className="modal-overlay" onClick={() => setShowAddPartModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>+ Add Inventory Part</h2>
+            <form onSubmit={handleSaveNewPart}>
+              <div className="form-group">
+                <label>Part Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Raspberry Pi 4, MPU6050 Gyro"
+                  value={newPartName}
+                  onChange={(e) => setNewPartName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Category *</label>
+                <select value={newPartCategory} onChange={(e) => setNewPartCategory(e.target.value)}>
+                  {['Sensors', 'Microcontrollers', 'Motors', 'Drivers', 'Mechanical', 'Power'].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Total Inventory *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newPartTotal}
+                  onChange={(e) => setNewPartTotal(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Low Stock Threshold</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newPartThreshold}
+                  onChange={(e) => setNewPartThreshold(e.target.value)}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddPartModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Add Part
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Defective Return & Replacement */}
       {defectiveModalTarget && (

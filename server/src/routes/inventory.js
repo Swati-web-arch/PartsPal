@@ -95,9 +95,51 @@ router.get('/kits', (req, res) => {
 });
 
 /**
+ * POST /api/kits
+ * OC Member creates a new kit from scratch
+ * Body: { name: string, items: [{ partId, qty }] }
+ */
+router.post('/kits', (req, res) => {
+  const { name, items } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Kit name is required' });
+  }
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Kit must include at least one part' });
+  }
+
+  // Validate each part exists and has positive qty
+  for (const item of items) {
+    const part = db.parts.find((p) => p.id === item.partId);
+    if (!part) {
+      return res.status(400).json({ error: `Part ${item.partId} does not exist in inventory` });
+    }
+    const q = parseInt(item.qty, 10);
+    if (isNaN(q) || q <= 0) {
+      return res.status(400).json({ error: `Quantity for ${part.name} must be a positive integer` });
+    }
+  }
+
+  const newKit = {
+    id: `k-${Date.now()}`,
+    name: name.trim(),
+    items: items.map((it) => ({
+      partId: it.partId,
+      qty: parseInt(it.qty, 10)
+    }))
+  };
+
+  db.kits.push(newKit);
+  logEvent('KIT_CREATED', 'oc', newKit.id, { name: newKit.name, items: newKit.items });
+
+  res.status(201).json(newKit);
+});
+
+/**
  * PATCH /api/kits/:id
- * OC Member can modify kit contents (e.g. add wheels, change items)
- * Body: { items: [{ partId, qty }] } or { name, items }
+ * OC Member can modify kit contents
  */
 router.patch('/kits/:id', (req, res) => {
   const kit = db.kits.find((k) => k.id === req.params.id);
@@ -108,7 +150,6 @@ router.patch('/kits/:id', (req, res) => {
   const { name, items } = req.body;
   if (name) kit.name = name.trim();
   if (items && Array.isArray(items)) {
-    // Validate each part exists and qty is positive integer
     for (const item of items) {
       const part = db.parts.find((p) => p.id === item.partId);
       if (!part) {

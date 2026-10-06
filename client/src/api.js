@@ -39,6 +39,17 @@ export async function fetchKits() {
   return res.json();
 }
 
+export async function createKit(kitData) {
+  const res = await fetch(`${API_BASE}/kits`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(kitData)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create kit');
+  return data;
+}
+
 export async function updateKit(kitId, payload) {
   const res = await fetch(`${API_BASE}/kits/${kitId}`, {
     method: 'PATCH',
