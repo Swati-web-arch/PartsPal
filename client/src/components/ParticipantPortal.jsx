@@ -1,5 +1,7 @@
 // client/src/components/ParticipantPortal.jsx
 import React, { useState } from 'react';
+import QRCodeModal from './QRCodeModal';
+import { getDueStatus } from '../utils/time';
 
 export default function ParticipantPortal({
   user,
@@ -23,24 +25,36 @@ export default function ParticipantPortal({
   const [modalLoading, setModalLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(null);
 
+  // Standalone QR code viewer
+  const [qrModalData, setQrModalData] = useState(null);
+
   // Filter student's own requests
   const myRequests = issues.filter(
     (i) => i.regNo.toUpperCase() === user.regNo.toUpperCase()
   );
 
-  // Categories list
   const categories = ['All', 'Kits', ...new Set(parts.map((p) => p.category))];
 
-  // Open modal handler
+  // Helper presets for quick return time
+  const applyPreset = (hoursToAdd, isTomorrow9AM = false) => {
+    const target = new Date();
+    if (isTomorrow9AM) {
+      target.setDate(target.getDate() + 1);
+      target.setHours(9, 0, 0, 0);
+    } else {
+      target.setHours(target.getHours() + hoursToAdd);
+    }
+    setReturnDate(target.toISOString().slice(0, 10));
+    setReturnTime(target.toTimeString().slice(0, 5));
+  };
+
   const handleOpenModal = (target) => {
     setRequestTarget(target);
     setQty(1);
     setModalError('');
     setGeneratedCode(null);
     setBorrowingAt(new Date().toISOString().slice(0, 16));
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setReturnDate(tomorrow.toISOString().slice(0, 10));
+    applyPreset(4); // default +4 hours
   };
 
   const handleFormSubmit = async (e) => {
@@ -79,7 +93,6 @@ export default function ParticipantPortal({
     }
   };
 
-  // Filtered parts
   const filteredParts = parts.filter((p) => {
     const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
@@ -143,14 +156,12 @@ export default function ParticipantPortal({
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
                 {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
 
-            {/* Kits Section (Shown if All or Kits selected) */}
+            {/* Kits Section */}
             {(selectedCategory === 'All' || selectedCategory === 'Kits') && (
               <div style={{ marginTop: '1.5rem' }}>
                 <h2 style={{ fontSize: '1.2rem', marginBottom: '0.75rem', color: '#1e293b' }}>
@@ -184,10 +195,18 @@ export default function ParticipantPortal({
                         </div>
                       </div>
 
-                      <div style={{ marginTop: '1rem' }}>
+                      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.55rem' }}
+                          title="View QR Label"
+                          onClick={() => setQrModalData({ title: kit.name, value: `KIT:${kit.id}:${kit.name}`, subtitle: 'Kit Shelf Label' })}
+                        >
+                          📱 QR
+                        </button>
                         <button
                           className="btn btn-primary"
-                          style={{ width: '100%' }}
+                          style={{ flex: 1 }}
                           disabled={kit.canIssueCount === 0}
                           onClick={() => handleOpenModal({ type: 'kit', item: kit })}
                         >
@@ -257,60 +276,69 @@ export default function ParticipantPortal({
               </div>
             ) : (
               <div className="grid">
-                {myRequests.map((req) => (
-                  <div key={req.id} className={`card ${req.isOverdue ? 'overdue-card' : ''}`}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{req.title}</h3>
-                        <span
-                          className={`badge ${
-                            req.status === 'issued'
-                              ? req.isOverdue
-                                ? 'badge-overdue'
-                                : 'badge-warning'
-                              : req.status === 'returned'
-                              ? 'badge-success'
-                              : 'badge-warning'
-                          }`}
-                        >
-                          {req.isOverdue ? 'OVERDUE' : req.status.toUpperCase()}
-                        </span>
-                      </div>
+                {myRequests.map((req) => {
+                  const dueInfo = getDueStatus(req.dueDate, req.returnedAt);
+                  return (
+                    <div key={req.id} className={`card ${dueInfo.isOverdue && req.status === 'issued' ? 'overdue-card' : ''}`}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{req.title}</h3>
+                          <span
+                            className="badge"
+                            style={{
+                              background: dueInfo.color,
+                              color: 'white'
+                            }}
+                          >
+                            {req.status === 'issued' ? dueInfo.label : req.status.toUpperCase()}
+                          </span>
+                        </div>
 
-                      <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
-                        <div><strong>Pickup Code:</strong> <code style={{ color: '#2563eb', fontWeight: 700 }}>{req.code}</code></div>
-                        <div><strong>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
-                        <div><strong>Expected Return:</strong> {new Date(req.dueDate).toLocaleString()}</div>
-                        {req.status === 'pending' && (
-                          <div style={{ color: '#b45309', fontWeight: 500, marginTop: '0.25rem' }}>
-                            ⏳ Awaiting OC desk approval
+                        <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <strong>Pickup Code:</strong>
+                            <code style={{ color: '#2563eb', fontWeight: 700, fontSize: '1rem' }}>{req.code}</code>
+                            <button
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+                              title="Show QR Code"
+                              onClick={() => setQrModalData({ title: `Pickup Code: ${req.code}`, value: req.code, subtitle: `Show this to OC Desk for ${req.title}` })}
+                            >
+                              📱 QR
+                            </button>
                           </div>
-                        )}
-                        {req.replacedIssueId && (
-                          <div style={{ color: '#16a34a', fontWeight: 500, marginTop: '0.25rem' }}>
-                            🔄 Issued as replacement for defective kit
-                          </div>
-                        )}
-                      </div>
+                          <div><strong>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
+                          <div><strong>Expected Return:</strong> {new Date(req.dueDate).toLocaleString()}</div>
+                          {req.status === 'pending' && (
+                            <div style={{ color: '#b45309', fontWeight: 500, marginTop: '0.25rem' }}>
+                              ⏳ Awaiting OC desk approval
+                            </div>
+                          )}
+                          {req.replacedIssueId && (
+                            <div style={{ color: '#16a34a', fontWeight: 500, marginTop: '0.25rem' }}>
+                              🔄 Issued as replacement for defective kit
+                            </div>
+                          )}
+                        </div>
 
-                      <div style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem' }}>
-                        <strong>Items:</strong>
-                        <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
-                          {req.lines.map((l, idx) => (
-                            <li key={idx}>{l.qty}x {l.partName}</li>
-                          ))}
-                        </ul>
+                        <div style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem' }}>
+                          <strong>Items:</strong>
+                          <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
+                            {req.lines.map((l, idx) => (
+                              <li key={idx}>{l.qty}x {l.partName}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         )}
       </main>
 
-      {/* Request Modal */}
+      {/* Request Modal with Quick Presets */}
       {requestTarget && (
         <div className="modal-overlay" onClick={() => setRequestTarget(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -319,7 +347,7 @@ export default function ParticipantPortal({
                 <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🎉</div>
                 <h2 style={{ fontSize: '1.3rem', marginBottom: '0.5rem' }}>Request Sent to OC!</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Your request has been routed to the OC webpage. Show this pickup code at the lab desk:
+                  Show this pickup code or QR code at the lab desk:
                 </p>
                 <div
                   style={{
@@ -331,11 +359,28 @@ export default function ParticipantPortal({
                     padding: '1rem',
                     borderRadius: '8px',
                     border: '2px dashed #93c5fd',
-                    marginBottom: '1.5rem'
+                    marginBottom: '1rem'
                   }}
                 >
                   {generatedCode}
                 </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.85rem' }}
+                    onClick={() => {
+                      setQrModalData({
+                        title: `Pickup Code: ${generatedCode}`,
+                        value: generatedCode,
+                        subtitle: `Student ${user.name} (${user.regNo}) - ${requestTarget.item.name}`
+                      });
+                    }}
+                  >
+                    📱 Open Scannable QR Code
+                  </button>
+                </div>
+
                 <button
                   className="btn btn-primary"
                   style={{ width: '100%' }}
@@ -367,6 +412,39 @@ export default function ParticipantPortal({
                       onChange={(e) => setBorrowingAt(e.target.value)}
                       required
                     />
+                  </div>
+
+                  {/* Quick Presets for Return */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#475569', marginBottom: '0.3rem' }}>
+                      Quick Return Presets:
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                        onClick={() => applyPreset(2)}
+                      >
+                        +2 Hours
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                        onClick={() => applyPreset(4)}
+                      >
+                        +4 Hours
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                        onClick={() => applyPreset(0, true)}
+                      >
+                        Tomorrow 9:00 AM
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -422,6 +500,16 @@ export default function ParticipantPortal({
             )}
           </div>
         </div>
+      )}
+
+      {/* Standalone QR Code Modal */}
+      {qrModalData && (
+        <QRCodeModal
+          title={qrModalData.title}
+          value={qrModalData.value}
+          subtitle={qrModalData.subtitle}
+          onClose={() => setQrModalData(null)}
+        />
       )}
     </div>
   );

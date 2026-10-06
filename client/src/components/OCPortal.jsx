@@ -1,5 +1,7 @@
 // client/src/components/OCPortal.jsx
 import React, { useState } from 'react';
+import QRCodeModal from './QRCodeModal';
+import { getDueStatus } from '../utils/time';
 
 export default function OCPortal({
   user,
@@ -21,6 +23,9 @@ export default function OCPortal({
 
   const [searchRegNo, setSearchRegNo] = useState('');
   const [processingId, setProcessingId] = useState(null);
+
+  // QR Modal
+  const [qrModalData, setQrModalData] = useState(null);
 
   // Defective modal state
   const [defectiveModalTarget, setDefectiveModalTarget] = useState(null);
@@ -59,10 +64,18 @@ export default function OCPortal({
   const [editingPartStock, setEditingPartStock] = useState(null);
   const [editTotalCount, setEditTotalCount] = useState(0);
 
-  // Counts
+  // Counts & Stats
   const pendingRequests = issues.filter((i) => i.status === 'pending');
   const activeIssues = issues.filter((i) => i.status === 'issued');
-  const overdueIssues = issues.filter((i) => i.status === 'issued' && i.isOverdue);
+  const overdueIssues = issues.filter((i) => {
+    if (i.status !== 'issued') return false;
+    const dueInfo = getDueStatus(i.dueDate, i.returnedAt);
+    return dueInfo.isOverdue;
+  });
+  const defectiveIssuesCount = issues.filter((i) => i.condition === 'defective').length;
+
+  const totalPartsInLab = parts.reduce((acc, p) => acc + (p.total || 0), 0);
+  const availablePartsInLab = parts.reduce((acc, p) => acc + (p.available || 0), 0);
 
   // Open Defective Modal
   const handleOpenDefectiveModal = (issue) => {
@@ -139,7 +152,6 @@ export default function OCPortal({
     setInlineCreatePart(false);
   };
 
-  // Add existing part to new kit
   const handleAddItemToNewKit = () => {
     if (!createKitSelectedPartId) return;
     const partObj = parts.find((p) => p.id === createKitSelectedPartId);
@@ -162,7 +174,6 @@ export default function OCPortal({
     }
   };
 
-  // Add Brand New Part On The Fly to New Kit
   const handleAddInlinePartToNewKit = async () => {
     if (!inlinePartName.trim()) {
       setCreateKitError('Please provide a name for the new part.');
@@ -170,7 +181,6 @@ export default function OCPortal({
     }
 
     try {
-      // 1. Create part in inventory
       const createdPart = await onAddPart({
         name: inlinePartName.trim(),
         category: inlinePartCategory,
@@ -178,7 +188,6 @@ export default function OCPortal({
         lowStockThreshold: 2
       });
 
-      // 2. Add to kit list
       setNewKitItems([
         ...newKitItems,
         {
@@ -189,7 +198,6 @@ export default function OCPortal({
         }
       ]);
 
-      // Reset inline form
       setInlinePartName('');
       setInlineCreatePart(false);
       setCreateKitSelectedPartId(createdPart.id);
@@ -277,9 +285,44 @@ export default function OCPortal({
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Live Stats Bar */}
       <div className="container" style={{ paddingBottom: 0 }}>
-        <div className="nav-tabs" style={{ marginTop: '0.5rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '0.75rem',
+            marginTop: '0.75rem'
+          }}
+        >
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>LAB STOCK READY</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#16a34a' }}>
+              {availablePartsInLab} <small style={{ fontSize: '0.8rem', color: '#64748b' }}>/ {totalPartsInLab}</small>
+            </div>
+          </div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>ACTIVE CHECKOUTS</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2563eb' }}>
+              {activeIssues.length}
+            </div>
+          </div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>OVERDUE (PAST 10M GRACE)</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: overdueIssues.length > 0 ? '#dc2626' : '#64748b' }}>
+              {overdueIssues.length}
+            </div>
+          </div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>DEFECTIVE LOGS</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706' }}>
+              {defectiveIssuesCount}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="nav-tabs" style={{ marginTop: '1rem' }}>
           <button
             className={`tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
             onClick={() => setActiveTab('requests')}
@@ -341,9 +384,18 @@ export default function OCPortal({
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{req.title}</h3>
-                        <span className="badge badge-warning" style={{ background: '#fef3c7', color: '#92400e' }}>
-                          {req.code}
-                        </span>
+                        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                          <button
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+                            title="Show QR Code"
+                            onClick={() => setQrModalData({ title: `Pickup Code: ${req.code}`, value: req.code, subtitle: `${req.memberName} (${req.regNo})` })}
+                          >
+                            📱 QR
+                          </button>
+                          <span className="badge badge-warning" style={{ background: '#fef3c7', color: '#92400e' }}>
+                            {req.code}
+                          </span>
+                        </div>
                       </div>
 
                       <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
@@ -395,11 +447,11 @@ export default function OCPortal({
           </div>
         )}
 
-        {/* 2. Who Has What & Overdue */}
+        {/* 2. Who Has What & Overdue with Grace Period */}
         {activeTab === 'who-has-what' && (
           <div style={{ marginTop: '1rem' }}>
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
-              Active checkouts. Items past expected return date are marked <strong>OVERDUE in red</strong>.
+              Active checkouts. Items past expected return date (with 10-minute grace period) are highlighted in red.
             </p>
 
             {activeIssues.length === 0 ? (
@@ -408,61 +460,77 @@ export default function OCPortal({
               </div>
             ) : (
               <div className="grid">
-                {activeIssues.map((issue) => (
-                  <div key={issue.id} className={`card ${issue.isOverdue ? 'overdue-card' : ''}`}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{issue.title}</h3>
-                        {issue.isOverdue ? (
-                          <span className="badge badge-overdue">OVERDUE</span>
-                        ) : (
-                          <span className="badge badge-warning">Active</span>
-                        )}
-                      </div>
+                {activeIssues.map((issue) => {
+                  const dueInfo = getDueStatus(issue.dueDate, issue.returnedAt);
+                  return (
+                    <div key={issue.id} className={`card ${dueInfo.isOverdue ? 'overdue-card' : ''}`}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{issue.title}</h3>
+                          <span
+                            className="badge"
+                            style={{
+                              background: dueInfo.color,
+                              color: 'white'
+                            }}
+                          >
+                            {dueInfo.label}
+                          </span>
+                        </div>
 
-                      <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
-                        <div><strong>Participant:</strong> {issue.memberName} (<code>{issue.regNo}</code>)</div>
-                        <div><strong>Pickup Code:</strong> <code>{issue.code}</code></div>
-                        <div><strong>Borrowed At:</strong> {new Date(issue.borrowingAt).toLocaleString()}</div>
-                        <div style={{ color: issue.isOverdue ? '#dc2626' : 'inherit', fontWeight: issue.isOverdue ? 700 : 'normal' }}>
-                          <strong>Expected Return:</strong> {new Date(issue.dueDate).toLocaleString()}
+                        <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
+                          <div><strong>Participant:</strong> {issue.memberName} (<code>{issue.regNo}</code>)</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <strong>Pickup Code:</strong> <code>{issue.code}</code>
+                            <button
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+                              title="Show QR Code"
+                              onClick={() => setQrModalData({ title: `Pickup Code: ${issue.code}`, value: issue.code, subtitle: `${issue.memberName} (${issue.regNo})` })}
+                            >
+                              📱 QR
+                            </button>
+                          </div>
+                          <div><strong>Borrowed At:</strong> {new Date(issue.borrowingAt).toLocaleString()}</div>
+                          <div style={{ color: dueInfo.isOverdue ? '#dc2626' : 'inherit', fontWeight: dueInfo.isOverdue ? 700 : 'normal' }}>
+                            <strong>Expected Return:</strong> {new Date(issue.dueDate).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div style={{ background: dueInfo.isOverdue ? '#fee2e2' : '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                          <strong>Issued Items:</strong>
+                          <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
+                            {issue.lines.map((l, idx) => (
+                              <li key={idx}>{l.qty}x {l.partName}</li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
 
-                      <div style={{ background: issue.isOverdue ? '#fee2e2' : '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                        <strong>Issued Items:</strong>
-                        <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
-                          {issue.lines.map((l, idx) => (
-                            <li key={idx}>{l.qty}x {l.partName}</li>
-                          ))}
-                        </ul>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <button
+                          className="btn btn-success"
+                          style={{ width: '100%' }}
+                          disabled={processingId === issue.id}
+                          onClick={async () => {
+                            setProcessingId(issue.id);
+                            await onMarkReturn(issue.id);
+                            setProcessingId(null);
+                          }}
+                        >
+                          ✓ Mark Returned (Good Condition)
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ width: '100%', color: '#b45309', borderColor: '#fde68a' }}
+                          disabled={processingId === issue.id}
+                          onClick={() => handleOpenDefectiveModal(issue)}
+                        >
+                          ⚠️ Mark Defective & Replace Kit
+                        </button>
                       </div>
                     </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-success"
-                        style={{ width: '100%' }}
-                        disabled={processingId === issue.id}
-                        onClick={async () => {
-                          setProcessingId(issue.id);
-                          await onMarkReturn(issue.id);
-                          setProcessingId(null);
-                        }}
-                      >
-                        ✓ Mark Returned (Good Condition)
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ width: '100%', color: '#b45309', borderColor: '#fde68a' }}
-                        disabled={processingId === issue.id}
-                        onClick={() => handleOpenDefectiveModal(issue)}
-                      >
-                        ⚠️ Mark Defective & Replace Kit
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -485,7 +553,7 @@ export default function OCPortal({
               </div>
             </div>
 
-            {/* Section A: Configured Kits */}
+            {/* Configured Kits */}
             <h2 style={{ fontSize: '1.15rem', marginBottom: '0.75rem', color: '#1e293b' }}>
               🚀 Kits Configured for Participants
             </h2>
@@ -513,20 +581,28 @@ export default function OCPortal({
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '1rem' }}>
+                  <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
                     <button
                       className="btn btn-secondary"
-                      style={{ width: '100%' }}
+                      style={{ padding: '0.55rem' }}
+                      title="Generate Printable Shelf QR Label"
+                      onClick={() => setQrModalData({ title: kit.name, value: `KIT:${kit.id}:${kit.name}`, subtitle: 'Official Lab Kit Shelf Label' })}
+                    >
+                      📱 QR Label
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ flex: 1 }}
                       onClick={() => handleOpenKitEditor(kit)}
                     >
-                      ✏️ Edit Kit Components
+                      ✏️ Edit Kit
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Section B: Parts Inventory & Stock Management */}
+            {/* Parts Inventory Manager */}
             <div style={{ marginTop: '2.5rem' }}>
               <h2 style={{ fontSize: '1.15rem', marginBottom: '0.75rem', color: '#1e293b' }}>
                 📦 Lab Parts Inventory (Set Owned Stock)
@@ -647,7 +723,7 @@ export default function OCPortal({
         )}
       </main>
 
-      {/* Modal: Create Brand New Kit (with Inline Part Creation) */}
+      {/* Modal: Create Brand New Kit */}
       {showCreateKitModal && (
         <div className="modal-overlay" onClick={() => setShowCreateKitModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -672,7 +748,6 @@ export default function OCPortal({
                 />
               </div>
 
-              {/* Added components in new kit */}
               <div style={{ marginBottom: '1rem' }}>
                 <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.4rem', color: '#334155' }}>
                   Kit Components Added ({newKitItems.length}):
@@ -709,7 +784,6 @@ export default function OCPortal({
                 )}
               </div>
 
-              {/* Add Part Section */}
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <strong style={{ fontSize: '0.85rem' }}>+ Add Component:</strong>
@@ -723,7 +797,6 @@ export default function OCPortal({
                 </div>
 
                 {!inlineCreatePart ? (
-                  /* Option 1: Pick from existing parts */
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <select
                       style={{ flex: 2, padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
@@ -739,7 +812,6 @@ export default function OCPortal({
                     <input
                       type="number"
                       min="1"
-                      title="Quantity needed for this kit"
                       style={{ width: '60px', padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                       value={createKitSelectedQty}
                       onChange={(e) => setCreateKitSelectedQty(e.target.value)}
@@ -753,7 +825,6 @@ export default function OCPortal({
                     </button>
                   </div>
                 ) : (
-                  /* Option 2: Create brand new part right here! */
                   <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       <input
@@ -1059,6 +1130,16 @@ export default function OCPortal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Standalone QR Code Modal */}
+      {qrModalData && (
+        <QRCodeModal
+          title={qrModalData.title}
+          value={qrModalData.value}
+          subtitle={qrModalData.subtitle}
+          onClose={() => setQrModalData(null)}
+        />
       )}
     </div>
   );
