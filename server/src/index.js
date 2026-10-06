@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import inventoryRoutes from './routes/inventory.js';
+import issuesRoutes from './routes/issues.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api', inventoryRoutes);
+app.use('/api', issuesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
