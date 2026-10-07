@@ -12,15 +12,16 @@ export function applyTheme(theme) {
   if (theme === 'dark') {
     root.setAttribute('data-theme', 'dark');
   } else if (theme === 'light') {
-    root.removeAttribute('data-theme');
+    root.setAttribute('data-theme', 'light');
   } else {
     // 'system' — follow OS preference
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (prefersDark) {
       root.setAttribute('data-theme', 'dark');
     } else {
-      root.removeAttribute('data-theme');
+      root.setAttribute('data-theme', 'light');
     }
   }
   localStorage.setItem('partspal_theme', theme);
 }
+
