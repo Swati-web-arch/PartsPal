@@ -58,24 +58,18 @@ export default function AuthScreen({ onLoginSuccess }) {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        padding: '1rem'
-      }}
-    >
+    <div className="auth-bg-wrapper">
       <div
         style={{
+          position: 'relative',
+          zIndex: 1,
           background: '#ffffff',
-          borderRadius: '12px',
+          borderRadius: '16px',
           width: '100%',
           maxWidth: '460px',
           padding: '2rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
+          boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 35px -5px rgba(249, 115, 22, 0.25)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
