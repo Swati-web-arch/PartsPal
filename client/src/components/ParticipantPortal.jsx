@@ -19,8 +19,30 @@ export default function ParticipantPortal({
   const [search, setSearch] = useState('');
   const [requestTarget, setRequestTarget] = useState(null); // { type: 'kit'|'part', item: {...} }
 
+  // Helper to format date in local timezone for HTML inputs (YYYY-MM-DDTHH:mm)
+  const formatLocalISOString = (date = new Date()) => {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    return localISOTime;
+  };
+
+  // Helper to format local date (YYYY-MM-DD)
+  const formatLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper to format local time (HH:mm)
+  const formatLocalTimeString = (date = new Date()) => {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   // Modal form states
-  const [borrowingAt, setBorrowingAt] = useState(new Date().toISOString().slice(0, 16));
+  const [borrowingAt, setBorrowingAt] = useState(() => formatLocalISOString());
   const [returnDate, setReturnDate] = useState('');
   const [returnTime, setReturnTime] = useState('');
   const [qty, setQty] = useState(1);
@@ -47,8 +69,8 @@ export default function ParticipantPortal({
     } else {
       target.setHours(target.getHours() + hoursToAdd);
     }
-    setReturnDate(target.toISOString().slice(0, 10));
-    setReturnTime(target.toTimeString().slice(0, 5));
+    setReturnDate(formatLocalDateString(target));
+    setReturnTime(formatLocalTimeString(target));
   };
 
   const handleOpenModal = (target) => {
@@ -56,7 +78,7 @@ export default function ParticipantPortal({
     setQty(1);
     setModalError('');
     setGeneratedCode(null);
-    setBorrowingAt(new Date().toISOString().slice(0, 16));
+    setBorrowingAt(formatLocalISOString());
     applyPreset(4); // default +4 hours
   };
 
