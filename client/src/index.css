@@ -118,20 +118,27 @@ body {
   z-index: 10;
 }
 
-.auth-club-logo .gear-badge {
-  width: 42px;
-  height: 42px;
+.auth-club-logo .club-logo-wrapper {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid #f59e0b;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-  font-weight: 800;
-  font-size: 1.15rem;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+  background: #000000;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  overflow: hidden;
+  padding: 4px;
 }
+
+.auth-club-logo .club-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.3));
+}
+
 
 .auth-club-logo .logo-text {
   line-height: 1.15;

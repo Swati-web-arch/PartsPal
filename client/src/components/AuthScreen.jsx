@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { loginUser } from '../api';
 import robotMascot from '../assets/robot-mascot.svg';
+import clubLogo from '../assets/club-logo.png';
 
 export default function AuthScreen({ onLoginSuccess }) {
   const [role, setRole] = useState('p'); // 'p' = Participant, 'oc' = OC Member
@@ -63,7 +64,13 @@ export default function AuthScreen({ onLoginSuccess }) {
     <div className="auth-bg-wrapper">
       {/* Top Left Club Logo */}
       <div className="auth-club-logo">
-        <div className="gear-badge">⚙️</div>
+        <div className="club-logo-wrapper">
+          <img
+            src={clubLogo}
+            alt="Robotics Club VITC Logo"
+            className="club-logo-img"
+          />
+        </div>
         <div className="logo-text">
           <h3>Robotics Club</h3>
           <span>VITC</span>
