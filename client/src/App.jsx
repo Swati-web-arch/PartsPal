@@ -17,6 +17,7 @@ import {
 import AuthScreen from './components/AuthScreen';
 import ParticipantPortal from './components/ParticipantPortal';
 import OCPortal from './components/OCPortal';
+import { getStoredTheme, applyTheme } from './utils/theme';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -24,9 +25,12 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [theme, setTheme] = useState(getStoredTheme);
+
   const [parts, setParts] = useState([]);
   const [kits, setKits] = useState([]);
   const [issues, setIssues] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
@@ -56,6 +60,16 @@ export default function App() {
     loadAllData();
   }, []);
 
+  // Apply theme whenever it changes
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem('partspal_user', JSON.stringify(userData));
@@ -80,7 +94,7 @@ export default function App() {
   // OC Approves
   const handleApprove = async (id) => {
     try {
-      const result = await approveRequest(id);
+      const result = await approveRequest(id, user?.name || 'OC Member');
       showMessage(`Approved ${result.title} for ${result.memberName}!`);
       await loadAllData();
     } catch (err) {
@@ -208,6 +222,8 @@ export default function App() {
           issues={issues}
           onLogout={handleLogout}
           onRequestSubmit={handleRequestSubmit}
+          theme={theme}
+          onThemeChange={handleThemeChange}
         />
       ) : (
         <OCPortal
@@ -224,6 +240,8 @@ export default function App() {
           onCreateKit={handleCreateKit}
           onAddPart={handleAddPart}
           onUpdatePartStock={handleUpdatePartStock}
+          theme={theme}
+          onThemeChange={handleThemeChange}
         />
       )}
     </div>

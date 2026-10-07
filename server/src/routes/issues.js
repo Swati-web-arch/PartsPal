@@ -134,7 +134,8 @@ router.post('/issues/:id/approve', (req, res) => {
 
   issue.status = 'issued';
   issue.issuedAt = new Date().toISOString();
-  logEvent('REQUEST_APPROVED', 'oc', issue.id, { title: issue.title, regNo: issue.regNo });
+  issue.issuedByName = req.body.issuedByName || 'OC Member';
+  logEvent('REQUEST_APPROVED', req.body.issuedByName || 'oc', issue.id, { title: issue.title, regNo: issue.regNo });
 
   res.json(issue);
 });

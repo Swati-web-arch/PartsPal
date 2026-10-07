@@ -93,9 +93,11 @@ export async function submitRequest(payload) {
   return data;
 }
 
-export async function approveRequest(issueId) {
+export async function approveRequest(issueId, issuedByName = 'OC Member') {
   const res = await fetch(`${API_BASE}/issues/${issueId}/approve`, {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issuedByName })
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to approve request');

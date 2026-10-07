@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import QRCodeModal from './QRCodeModal';
 import QRScannerModal from './QRScannerModal';
+import ThemeToggle from './ThemeToggle';
 import { getDueStatus } from '../utils/time';
 
 export default function OCPortal({
@@ -17,7 +18,9 @@ export default function OCPortal({
   onUpdateKit,
   onCreateKit,
   onAddPart,
-  onUpdatePartStock
+  onUpdatePartStock,
+  theme,
+  onThemeChange
 }) {
   const [activeTab, setActiveTab] = useState('requests'); 
   // 'requests' | 'who-has-what' | 'kit-editor' | 'history'
@@ -277,10 +280,11 @@ export default function OCPortal({
           <div className="brand">
             <span>🛠️</span> PartsPal &mdash; OC Lead Portal
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#475569', textAlign: 'right' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <ThemeToggle theme={theme} onChange={onThemeChange} />
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
               <strong>{user.name}</strong> (OC Lead)
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.email}</div>
             </div>
             <button className="btn btn-secondary" onClick={onLogout} style={{ fontSize: '0.8rem' }}>
               Switch / Logout
@@ -689,6 +693,7 @@ export default function OCPortal({
                     <th>Participant</th>
                     <th>Reg No</th>
                     <th>Borrowed At</th>
+                    <th>Issued By</th>
                     <th>Condition / Notes</th>
                   </tr>
                 </thead>
@@ -717,6 +722,15 @@ export default function OCPortal({
                         <td>{issue.memberName}</td>
                         <td><code>{issue.regNo}</code></td>
                         <td>{new Date(issue.borrowingAt).toLocaleDateString()}</td>
+                        <td>
+                          {issue.issuedByName ? (
+                            <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                              {issue.issuedByName}
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>—</span>
+                          )}
+                        </td>
                         <td>
                           {issue.condition === 'defective' ? (
                             <span style={{ color: '#dc2626', fontWeight: 600 }}>

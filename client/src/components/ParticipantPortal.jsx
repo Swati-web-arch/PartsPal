@@ -1,6 +1,7 @@
 // client/src/components/ParticipantPortal.jsx
 import React, { useState } from 'react';
 import QRCodeModal from './QRCodeModal';
+import ThemeToggle from './ThemeToggle';
 import { getDueStatus } from '../utils/time';
 
 export default function ParticipantPortal({
@@ -9,7 +10,9 @@ export default function ParticipantPortal({
   kits,
   issues,
   onLogout,
-  onRequestSubmit
+  onRequestSubmit,
+  theme,
+  onThemeChange
 }) {
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'my-requests'
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -19,7 +22,7 @@ export default function ParticipantPortal({
   // Modal form states
   const [borrowingAt, setBorrowingAt] = useState(new Date().toISOString().slice(0, 16));
   const [returnDate, setReturnDate] = useState('');
-  const [returnTime, setReturnTime] = useState('17:00');
+  const [returnTime, setReturnTime] = useState('');
   const [qty, setQty] = useState(1);
   const [modalError, setModalError] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
@@ -107,10 +110,11 @@ export default function ParticipantPortal({
           <div className="brand">
             <span>🤖</span> PartsPal &mdash; Participant Portal
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '0.85rem', color: '#475569', textAlign: 'right' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <ThemeToggle theme={theme} onChange={onThemeChange} />
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
               <strong>{user.name}</strong> (<code>{user.regNo}</code>)
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.email}</div>
             </div>
             <button className="btn btn-secondary" onClick={onLogout} style={{ fontSize: '0.8rem' }}>
               Switch / Logout
@@ -405,13 +409,16 @@ export default function ParticipantPortal({
 
                 <form onSubmit={handleFormSubmit}>
                   <div className="form-group">
-                    <label>Borrowing At (Date & Time) *</label>
+                    <label>Borrowing At (Date &amp; Time) *</label>
                     <input
                       type="datetime-local"
                       value={borrowingAt}
                       onChange={(e) => setBorrowingAt(e.target.value)}
                       required
                     />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                      🕐 Pre-filled with current date &amp; time — edit if needed
+                    </span>
                   </div>
 
                   {/* Quick Presets for Return */}

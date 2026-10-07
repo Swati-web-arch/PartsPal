@@ -20,6 +20,20 @@ export default function AuthScreen({ onLoginSuccess }) {
       return;
     }
 
+    // Validate VIT student email format
+    const vitEmailRegex = /^[a-z]+\.[a-z]+\d{4}@vitstudent\.ac\.in$/i;
+    if (!vitEmailRegex.test(email.trim())) {
+      setError('Email must be in VIT format: xyz.abc2025@vitstudent.ac.in');
+      return;
+    }
+
+    // Validate reg no format (e.g. 25BRS1234)
+    const regNoRegex = /^\d{2}[A-Z]{3}\d{4}$/i;
+    if (!regNoRegex.test(regNo.trim())) {
+      setError('Registration number must be in format: 25BRS1234');
+      return;
+    }
+
     if (role === 'oc' && !passcode.trim()) {
       setError('Please provide the OC Member Passcode.');
       return;
@@ -120,7 +134,7 @@ export default function AuthScreen({ onLoginSuccess }) {
             <label>Full Name</label>
             <input
               type="text"
-              placeholder="e.g. Alex Rivera"
+              placeholder="e.g. xyz abc"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -131,7 +145,7 @@ export default function AuthScreen({ onLoginSuccess }) {
             <label>Email ID *</label>
             <input
               type="email"
-              placeholder="e.g. alex.rivera@vitstudent.ac.in"
+              placeholder="e.g. xyz.abc2025@vitstudent.ac.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -142,9 +156,9 @@ export default function AuthScreen({ onLoginSuccess }) {
             <label>Registration Number *</label>
             <input
               type="text"
-              placeholder="e.g. 22BCE1234"
+              placeholder="e.g. 25BRS1234"
               value={regNo}
-              onChange={(e) => setRegNo(e.target.value)}
+              onChange={(e) => setRegNo(e.target.value.toUpperCase())}
               required
             />
           </div>
