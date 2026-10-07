@@ -1,6 +1,7 @@
 // client/src/components/AuthScreen.jsx
 import React, { useState } from 'react';
 import { loginUser } from '../api';
+import robotMascot from '../assets/robot-mascot.svg';
 
 export default function AuthScreen({ onLoginSuccess }) {
   const [role, setRole] = useState('p'); // 'p' = Participant, 'oc' = OC Member
@@ -8,6 +9,7 @@ export default function AuthScreen({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [regNo, setRegNo] = useState('');
   const [passcode, setPasscode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -59,130 +61,167 @@ export default function AuthScreen({ onLoginSuccess }) {
 
   return (
     <div className="auth-bg-wrapper">
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          background: '#ffffff',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '460px',
-          padding: '2rem',
-          boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 35px -5px rgba(249, 115, 22, 0.25)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>🤖</div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>PartsPal</h1>
-          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-            Robotics Club Inventory & Kit Checkout
-          </p>
+      {/* Top Left Club Logo */}
+      <div className="auth-club-logo">
+        <div className="gear-badge">⚙️</div>
+        <div className="logo-text">
+          <h3>Robotics Club</h3>
+          <span>VITC</span>
         </div>
+      </div>
 
-        {/* Role Toggle Selector */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: '#334155' }}>
-            You are signing in as:
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => { setRole('p'); setError(''); }}
-              style={{
-                padding: '0.75rem',
-                borderRadius: '8px',
-                border: role === 'p' ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                background: role === 'p' ? '#eff6ff' : '#f8fafc',
-                color: role === 'p' ? '#1d4ed8' : '#64748b',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                cursor: 'pointer'
-              }}
-            >
-              🎓 Participant (P)
-            </button>
-            <button
-              type="button"
-              onClick={() => { setRole('oc'); setError(''); }}
-              style={{
-                padding: '0.75rem',
-                borderRadius: '8px',
-                border: role === 'oc' ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                background: role === 'oc' ? '#eff6ff' : '#f8fafc',
-                color: role === 'oc' ? '#1d4ed8' : '#64748b',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                cursor: 'pointer'
-              }}
-            >
-              🛠️ OC Member (OC)
-            </button>
-          </div>
-        </div>
+      {/* Glowing Brand Title */}
+      <div className="auth-brand-heading">
+        <h1 className="auth-brand-title">PartsPal</h1>
+        <p className="auth-brand-sub">Robotics Club Inventory Management</p>
+      </div>
 
-        {error && <div className="alert-error">{error}</div>}
+      {/* Glass Card + Mascot Wrapper */}
+      <div className="auth-card-container">
+        {/* Waving Mascot Robot */}
+        <img
+          src={robotMascot}
+          alt="PartsPal Robot Assistant"
+          className="auth-robot-mascot"
+        />
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              placeholder="e.g. xyz abc"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
+        <div className="auth-glass-card">
+          <h2
+            style={{
+              textAlign: 'center',
+              color: '#f8fafc',
+              fontSize: '1.45rem',
+              fontWeight: 700,
+              marginBottom: '1.25rem',
+              letterSpacing: '0.5px'
+            }}
+          >
+            Login
+          </h2>
 
-          <div className="form-group">
-            <label>Email ID *</label>
-            <input
-              type="email"
-              placeholder="e.g. xyz.abc2025@vitstudent.ac.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
-          <div className="form-group">
-            <label>Registration Number *</label>
-            <input
-              type="text"
-              placeholder="e.g. 25BRS1234"
-              value={regNo}
-              onChange={(e) => setRegNo(e.target.value.toUpperCase())}
-              required
-            />
-          </div>
-
-          {/* OC Member Passcode Field */}
-          {role === 'oc' && (
-            <div className="form-group">
-              <label>OC Passcode * (Known only by OC Leads)</label>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group" style={{ marginBottom: '0.9rem' }}>
+              <label style={{ color: '#cbd5e1', fontSize: '0.82rem', fontWeight: 600 }}>
+                Registration Number
+              </label>
               <input
-                type="password"
-                placeholder="Enter secret OC passcode"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
+                type="text"
+                placeholder="e.g. 25BRS1234"
+                value={regNo}
+                onChange={(e) => setRegNo(e.target.value.toUpperCase())}
+                className="auth-dark-input"
                 required
               />
-              <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '0.2rem' }}>
-              </span>
             </div>
-          )}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', fontSize: '1rem' }}
-            disabled={loading}
-          >
-            {loading ? 'Authenticating...' : role === 'p' ? 'Enter Participant Portal' : 'Enter OC Lead Portal'}
-          </button>
-        </form>
+            <div className="form-group" style={{ marginBottom: '0.9rem' }}>
+              <label style={{ color: '#cbd5e1', fontSize: '0.82rem', fontWeight: 600 }}>
+                Email ID (VIT Student)
+              </label>
+              <input
+                type="email"
+                placeholder="e.g. xyz.abc2025@vitstudent.ac.in"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="auth-dark-input"
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '0.9rem' }}>
+              <label style={{ color: '#cbd5e1', fontSize: '0.82rem', fontWeight: 600 }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. xyz abc"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="auth-dark-input"
+                required
+              />
+            </div>
+
+            {/* OC Passcode Field (for OC role) */}
+            {role === 'oc' && (
+              <div className="form-group" style={{ marginBottom: '0.9rem', position: 'relative' }}>
+                <label style={{ color: '#fbbf24', fontSize: '0.82rem', fontWeight: 600 }}>
+                  OC Passcode *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter OC Lead passcode"
+                    value={passcode}
+                    onChange={(e) => setPasscode(e.target.value)}
+                    className="auth-dark-input"
+                    style={{ paddingRight: '2.5rem' }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontSize: '1.1rem'
+                    }}
+                    title={showPassword ? 'Hide passcode' : 'Show passcode'}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn-amber-glow"
+              style={{ marginTop: '0.6rem' }}
+              disabled={loading}
+            >
+              {loading
+                ? 'Authenticating...'
+                : role === 'p'
+                ? 'Login'
+                : 'Login as OC Lead'}
+            </button>
+          </form>
+
+          {/* Dual Segmented Role Switcher at Bottom */}
+          <div className="auth-segmented-tabs">
+            <button
+              type="button"
+              className={`auth-segmented-btn ${role === 'p' ? 'active' : ''}`}
+              onClick={() => {
+                setRole('p');
+                setError('');
+              }}
+            >
+              Participant Portal
+            </button>
+            <button
+              type="button"
+              className={`auth-segmented-btn ${role === 'oc' ? 'active' : ''}`}
+              onClick={() => {
+                setRole('oc');
+                setError('');
+              }}
+            >
+              OC Lead Portal
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

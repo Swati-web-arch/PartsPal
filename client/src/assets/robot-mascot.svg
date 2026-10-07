@@ -1,0 +1,55 @@
+<svg viewBox="0 0 280 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Soft Glow behind Robot -->
+  <circle cx="150" cy="160" r="110" fill="url(#cyanGlow)" opacity="0.35" />
+
+  <!-- Robot Body -->
+  <ellipse cx="150" cy="235" rx="52" ry="46" fill="#FFFFFF" stroke="#0F172A" stroke-width="4.5" />
+  <ellipse cx="150" cy="235" rx="36" ry="32" fill="#F8FAFC" />
+
+  <!-- Robot Head Outline and Fill -->
+  <rect x="75" y="80" width="150" height="110" rx="55" fill="#FFFFFF" stroke="#0F172A" stroke-width="5" />
+  
+  <!-- Ear Headphones Left -->
+  <rect x="58" y="110" width="20" height="50" rx="10" fill="#EA580C" stroke="#0F172A" stroke-width="4.5" />
+  <rect x="63" y="118" width="10" height="34" rx="5" fill="#FB923C" />
+  
+  <!-- Ear Headphones Right -->
+  <rect x="222" y="110" width="20" height="50" rx="10" fill="#EA580C" stroke="#0F172A" stroke-width="4.5" />
+  <rect x="227" y="118" width="10" height="34" rx="5" fill="#FB923C" />
+
+  <!-- Visor / Face Screen -->
+  <rect x="88" y="94" width="124" height="82" rx="41" fill="#0B132B" stroke="#0F172A" stroke-width="3" />
+
+  <!-- Blue Glowing Eyes -->
+  <ellipse cx="120" cy="132" rx="10" ry="15" fill="#38BDF8" />
+  <ellipse cx="123" cy="128" rx="3.5" ry="5.5" fill="#FFFFFF" />
+
+  <ellipse cx="180" cy="132" rx="10" ry="15" fill="#38BDF8" />
+  <ellipse cx="183" cy="128" rx="3.5" ry="5.5" fill="#FFFFFF" />
+
+  <!-- Happy Smiling Mouth -->
+  <path d="M 137 154 Q 150 164 163 154" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" fill="none" />
+
+  <!-- Waving Hand (Left from viewer's perspective) -->
+  <g transform="rotate(-18 55 170)">
+    <path d="M 85 180 C 65 175 45 160 38 140 C 35 130 45 125 55 135 C 62 142 70 155 85 165 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="4.5" />
+    <!-- Orange cuff -->
+    <ellipse cx="80" cy="175" rx="10" ry="14" fill="#EA580C" stroke="#0F172A" stroke-width="3.5" />
+    <!-- Glove fingers -->
+    <circle cx="38" cy="132" r="7" fill="#334155" />
+    <circle cx="48" cy="125" r="7" fill="#334155" />
+    <circle cx="60" cy="128" r="6.5" fill="#334155" />
+  </g>
+
+  <!-- Right Resting Arm -->
+  <path d="M 200 220 Q 225 240 230 265" stroke="#0F172A" stroke-width="12" stroke-linecap="round" fill="none" />
+  <path d="M 200 220 Q 225 240 230 265" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" />
+  <circle cx="230" cy="268" r="10" fill="#334155" stroke="#0F172A" stroke-width="3" />
+
+  <defs>
+    <radialGradient id="cyanGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+</svg>

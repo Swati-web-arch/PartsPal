@@ -62,48 +62,264 @@ body {
   position: relative;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  background-color: #060913;
+  padding: 2rem 1rem;
+  background-color: #060810;
   background-image: 
-    radial-gradient(ellipse at 50% 25%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 10% 85%, rgba(234, 88, 12, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 100%, rgba(15, 23, 42, 0.9) 0%, #060913 100%);
-  overflow: hidden;
+    radial-gradient(ellipse at 50% 15%, rgba(245, 158, 11, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 12% 80%, rgba(245, 158, 11, 0.14) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 95%, rgba(15, 23, 42, 0.95) 0%, #060810 100%);
+  overflow-x: hidden;
 }
 
-/* Constellation / Tech Grid Overlay */
+/* Constellation / Particle Field */
 .auth-bg-wrapper::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 40px 70px, rgba(251, 146, 60, 0.7), rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 160px 120px, rgba(56, 189, 248, 0.7), rgba(0,0,0,0)),
-    radial-gradient(1.5px 1.5px at 220px 190px, #fff, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 310px 80px, rgba(251, 146, 60, 0.6), rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 450px 220px, #fff, rgba(0,0,0,0));
+    radial-gradient(2px 2px at 30px 40px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2.5px 2.5px at 60px 80px, rgba(251, 146, 60, 0.85), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 110px 50px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 180px 140px, rgba(56, 189, 248, 0.8), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 240px 210px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2.5px 2.5px at 330px 90px, rgba(251, 146, 60, 0.75), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 420px 240px, #38bdf8, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 470px 180px, #fff, rgba(0,0,0,0));
   background-repeat: repeat;
-  background-size: 500px 500px;
-  opacity: 0.65;
+  background-size: 520px 520px;
+  opacity: 0.75;
   pointer-events: none;
 }
 
-/* Subtle Geometric Poly Mesh Lines in Corners */
+/* Constellation Lines & Grid */
 .auth-bg-wrapper::after {
   content: "";
   position: absolute;
   inset: 0;
   background: 
-    linear-gradient(135deg, transparent 75%, rgba(56, 189, 248, 0.04) 75%),
-    linear-gradient(225deg, transparent 75%, rgba(249, 115, 22, 0.04) 75%);
-  background-size: 60px 60px;
+    linear-gradient(135deg, transparent 70%, rgba(56, 189, 248, 0.05) 70%),
+    linear-gradient(225deg, transparent 70%, rgba(245, 158, 11, 0.05) 70%);
+  background-size: 70px 70px;
   pointer-events: none;
 }
+
+/* Club Logo Top Left */
+.auth-club-logo {
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.auth-club-logo .gear-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 1.15rem;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+}
+
+.auth-club-logo .logo-text {
+  line-height: 1.15;
+}
+
+.auth-club-logo .logo-text h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.auth-club-logo .logo-text span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+/* Glowing Top Brand Header */
+.auth-brand-heading {
+  text-align: center;
+  margin-bottom: 1.8rem;
+  position: relative;
+  z-index: 5;
+}
+
+.auth-brand-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #fed7aa;
+  text-shadow: 
+    0 0 10px rgba(245, 158, 11, 0.8),
+    0 0 25px rgba(245, 158, 11, 0.6),
+    0 0 50px rgba(234, 88, 12, 0.4);
+  margin-bottom: 0.35rem;
+}
+
+.auth-brand-sub {
+  font-size: 1.05rem;
+  color: #cbd5e1;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* Glassmorphic Login Card */
+.auth-card-container {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  z-index: 5;
+}
+
+.auth-glass-card {
+  position: relative;
+  background: rgba(18, 22, 34, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 2.2rem 2.2rem 1.8rem;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.7),
+    0 0 35px -5px rgba(245, 158, 11, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.auth-glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbbf24, #f59e0b, transparent);
+  box-shadow: 0 0 10px #f59e0b;
+}
+
+/* Mascot Robot Avatar */
+.auth-robot-mascot {
+  position: absolute;
+  top: 15%;
+  right: -95px;
+  width: 175px;
+  height: auto;
+  z-index: 12;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6)) drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
+  pointer-events: none;
+  animation: floatMascot 4s ease-in-out infinite;
+}
+
+@keyframes floatMascot {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@media (max-width: 680px) {
+  .auth-robot-mascot {
+    display: none;
+  }
+  .auth-club-logo {
+    position: static;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Dark Glass Input Style */
+.auth-dark-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  background: rgba(10, 14, 24, 0.85) !important;
+  border: 1px solid rgba(71, 85, 105, 0.6) !important;
+  border-radius: 10px !important;
+  color: #f8fafc !important;
+  font-size: 0.92rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.auth-dark-input:focus {
+  outline: none;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+}
+
+/* Glowing Amber Login Button */
+.btn-amber-glow {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #0b0f19;
+  box-shadow: 
+    0 4px 15px rgba(245, 158, 11, 0.45),
+    0 0 25px rgba(234, 88, 12, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-amber-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px rgba(245, 158, 11, 0.6),
+    0 0 30px rgba(234, 88, 12, 0.5);
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+}
+
+.btn-amber-glow:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Dual Segmented Role Switcher at Bottom */
+.auth-segmented-tabs {
+  display: flex;
+  background: rgba(10, 14, 26, 0.85);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 10px;
+  padding: 3px;
+  margin-top: 1.4rem;
+}
+
+.auth-segmented-btn {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-segmented-btn.active {
+  background: rgba(30, 41, 59, 0.95);
+  color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
 
 
 .container {
