@@ -303,27 +303,27 @@ export default function OCPortal({
             marginTop: '0.75rem'
           }}
         >
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>LAB STOCK READY</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#16a34a' }}>
-              {availablePartsInLab} <small style={{ fontSize: '0.8rem', color: '#64748b' }}>/ {totalPartsInLab}</small>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.85rem 1.1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>LAB STOCK READY</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', marginTop: '0.2rem' }}>
+              {availablePartsInLab} <small style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ {totalPartsInLab}</small>
             </div>
           </div>
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>ACTIVE CHECKOUTS</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#2563eb' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.85rem 1.1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>ACTIVE CHECKOUTS</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.2rem' }}>
               {activeIssues.length}
             </div>
           </div>
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>OVERDUE (PAST 10M GRACE)</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: overdueIssues.length > 0 ? '#dc2626' : '#64748b' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.85rem 1.1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>OVERDUE (PAST 10M GRACE)</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: overdueIssues.length > 0 ? '#ef4444' : 'var(--text-muted)', marginTop: '0.2rem' }}>
               {overdueIssues.length}
             </div>
           </div>
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>DEFECTIVE LOGS</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0.85rem 1.1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>DEFECTIVE LOGS</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.2rem' }}>
               {defectiveIssuesCount}
             </div>
           </div>
