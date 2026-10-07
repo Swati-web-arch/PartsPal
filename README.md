@@ -100,7 +100,7 @@ Client starts on `http://localhost:5173`. Open in your browser!
    - Request the **Robotic Car Line-Follower Kit** using the quick preset `+4 Hours`.
    - View the generated **Pickup Code** (e.g. `K-4821`) and click **📱 Open Scannable QR Code**.
 2. **OC Lead View**:
-   - Log out and log in as **OC Member (OC)** with passcode `labsecret123`.
+   - Log out and log in as **OC Member (OC)** with passcode.
    - Check the **📥 Pending Requests** tab, locate `K-4821`, and click **Approve & Issue**.
    - Check the **Live Stats Bar** to watch Active Checkouts increment!
 3. **Customize Kit**:

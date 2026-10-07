@@ -175,7 +175,6 @@ export default function AuthScreen({ onLoginSuccess }) {
                 required
               />
               <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginTop: '0.2rem' }}>
-                Hint for demo: <code>labsecret123</code>
               </span>
             </div>
           )}

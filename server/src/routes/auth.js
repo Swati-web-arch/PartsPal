@@ -29,7 +29,7 @@ router.post('/login', (req, res) => {
 
   // If signing in as OC Member, check passcode
   if (role === 'oc') {
-    const requiredPasscode = process.env.ASSISTANT_PASSWORD || 'labsecret123';
+    const requiredPasscode = process.env.ASSISTANT_PASSWORD ;
     if (!passcode || passcode.trim() !== requiredPasscode) {
       return res.status(401).json({ error: 'Invalid OC Member Passcode. Only known by OC leads.' });
     }
