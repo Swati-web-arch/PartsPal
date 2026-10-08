@@ -1,5 +1,8 @@
 // client/src/api.js
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Normalize: remove trailing slash, ensure it ends with /api
+const cleanUrl = rawUrl.replace(/\/+$/, '');
+const API_BASE = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 
 export async function loginUser(credentials) {
   const res = await fetch(`${API_BASE}/auth/login`, {
