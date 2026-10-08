@@ -1,4 +1,4 @@
-# PartsPal 🤖 — Robotics Club Lab Inventory & Kit Checkout System
+# PartsPal  — Robotics Club Lab Inventory & Kit Checkout System
 
 <p align="center">
   <img src="client/src/assets/club-logo.png" width="100" alt="Robotics Club Logo"/>
