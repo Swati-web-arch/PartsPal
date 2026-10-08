@@ -1,124 +1,170 @@
 # PartsPal 🤖 — Robotics Club Lab Inventory & Kit Checkout System
 
-> **Round 2 Build Task (PS-05 PartsPal - Standard / Robotics)**  
-> Built with React (Vite) and Node.js (Express).
+<p align="center">
+  <img src="client/src/assets/club-logo.png" width="100" alt="Robotics Club Logo"/>
+  <br>
+  <strong>Robotics Club VITC — Lab Operations & Hardware Checkout Portal</strong>
+  <br>
+  <em>Round 2 Build Task (PS-05 PartsPal - Standard / Robotics)</em>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19.x-61dafb?style=for-the-badge&logo=react&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Vite-8.x-646cff?style=for-the-badge&logo=vite&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Deployment-Render_%26_Vercel-black?style=for-the-badge&logo=vercel"/>
+</p>
 
 ---
 
 ## 📌 Problem Statement & App Overview
-The robotics club lab lends out Arduinos, sensors, motor drivers, and specialized project kits (like line-follower kits). Without an organized system, parts go missing before competition season and teams struggle to coordinate checkouts.
 
-**PartsPal** provides a complete end-to-end management platform tailored for both students and lab organizing committee leads:
-1. **Dual Role Sign In**: Quick onboarding for **Participants (P)** (email + reg no) and secure access for **OC Leads (OC)** (passcode authenticated).
-2. **Key Challenge (All-or-Nothing Kit Issuing)**: The server verifies stock for every single component in a kit before decrementing. If even one part is out of stock, the issue fails atomically with a descriptive error naming the exact missing parts.
-3. **Dynamic Kit Builder & Part Manager**: OC leads can customize kit contents on the fly (e.g. adding wheels to a robotic car kit) or create brand new kits and add new parts into the lab inventory with immediate synchronization.
-4. **Smart Defective Return & Replacement**: If a student returns a kit with a damaged motor or broken sensor, the OC lead can mark the kit defective, record defect notes, and **immediately issue a fresh replacement kit** on the spot.
-5. **Printable QR Codes**: Instant QR code generation for student pickup codes and printable kit shelf labels.
-6. **Grace Period & Overdue Tracking**: 10-minute grace period with humanized timers (*"Due in 2h"*, *"In Grace Period (5m left)"*, *"⚠️ Overdue by 30m"*).
-7. **Live Stats Bar**: Real-time overview of Lab Stock, Active Checkouts, Overdue Items, and Defective Logs.
+During hackathons and robotics competition seasons, managing microcontrollers, sensors, motor drivers, and specialized assembled kits (e.g., line-follower kits) is prone to stock discrepancies and long desk queues.
+
+**PartsPal** solves this with an end-to-end management platform tailored for both students and lab organizing committee (OC) leads:
+
+1. **Dual Role Sign In**:
+   - **Participants (P)**: Sign in with VIT student email (`xyz.abc2025@vitstudent.ac.in`) & registration number (`25BRS1234`).
+   - **OC Leads (OC)**: Protected with secret passcode authentication (`labsecret123`).
+2. **All-or-Nothing Kit Issuing (Core Algorithm)**:
+   - When a kit is requested, the server atomically checks available stock across **every individual component**. If even one part is out of stock, the transaction fails safely with an itemized explanation of missing items, preventing partial checkouts and corrupted stock counts.
+3. **Dynamic Kit Builder & Part Manager**:
+   - OC leads can customize kit recipes dynamically (e.g., adding robotic wheels or motor drivers to a chassis kit) or create new inventory components with immediate live synchronization.
+4. **Smart Defective Return & Replacement**:
+   - If a participant returns a kit with a damaged component, the OC logs the incident. Undamaged parts return to inventory, total damaged inventory decreases, and a **fresh replacement kit** is issued on the spot under a linked audit ID.
+5. **Real-Time QR Scanner & Code Generator**:
+   - Instant QR code generation on student request confirmation for phone screen display or printable shelf labels.
+   - Built-in **camera-based QR scanner** (`html5-qrcode`) on the OC desk portal for 1-click scan-and-approve checkouts.
+6. **Grace Period & Overdue Calculations**:
+   - 10-minute grace period with humanized countdown timers (*"Due in 2h"*, *"⏳ In Grace Period (5m left)"*, *"⚠️ Overdue by 25m"*).
+7. **Live Stats Bar & Dark/Light Space Theme**:
+   - Real-time inventory overview tracking Ready Stock, Active Checkouts, Overdue loans, and Defective logs.
+   - Space-glass UI inspired by the Robotics Club mascot with full **🌙 Dark / ☀️ Light / 💻 System** theme switcher.
 
 ---
 
-## 🚀 Features Implemented
+## 🚀 Key Features
 
-### Core Features (PS-05 Specification)
-- [x] **Inventory Management**: Real-time available and total stock, search bar, and category filters (`Sensors`, `Microcontrollers`, `Drivers`, `Motors`, `Mechanical`, `Power`).
-- [x] **All-or-Nothing Kit Issuing**: Strict server validation preventing partial kit checkouts.
-- [x] **Who Has What**: Active checkouts dashboard with student name, registration number, checkout time, and expected return time.
-- [x] **Overdue Highlighting**: Dynamic red alerts on cards past their return time (accounting for the 10-minute grace period).
-- [x] **Return Processing**: Restores stock to inventory upon return confirmation.
+### 🎓 Participant Portal
+- **Kit & Component Catalog**: Browse complete robotics kits and individual sensors with live stock counters.
+- **Local Time Pre-Fill**: Request modal automatically pre-fills with your current device time and presets (`+2 Hours`, `+4 Hours`, `Tomorrow 9:00 AM`).
+- **Pickup Codes & Scannable QR Codes**: Generates short codes (`K-XXXX` or `P-XXXX`) and canvas QR codes to show at the lab desk.
+- **My Requests Tracking**: Real-time status tracker (*Pending*, *Issued*, *Overdue*) with countdown badges.
 
-### High-Impact Additions & Stretch Goals
-- [x] **Role-Based Portals**: Clean separate views for **Participants** and **OC Leads** with seamless role switching.
-- [x] **Custom Kit Creator**: OC leads can assemble and publish new kits from existing parts or create brand-new parts (e.g. `L298N Motor Driver`, `Linear Actuator`) directly from the kit builder.
-- [x] **Lab Stock Editor**: OC leads can adjust total owned units as new lab supplies arrive.
-- [x] **Defective Return & Instant Replacement**: Handles damaged returns and immediately issues replacement kits to participants.
-- [x] **QR Code Labels & Scanner**: Instant QR generation for pickup codes and printable shelf labels (`qrcode`).
-- [x] **Quick Return Presets**: 1-click presets on request forms (`+2 Hours`, `+4 Hours`, `Tomorrow 9:00 AM`).
-- [x] **Member Borrowing History**: Searchable history by registration number with return condition logs.
-- [x] **Live Lab Stats Bar**: Real-time counter of available parts, active loans, and defective incidents.
+### 🛠️ OC Lead Portal
+- **Live Lab Stats Bar**: Real-time overview of Available Parts, Active Loans, Overdue Checkouts, and Defective Incident counts.
+- **Camera QR Scanner Modal**: Scan participant phone screens directly from laptop webcam or search manually to approve kits in 1 click.
+- **Who Has What**: Live loans dashboard displaying borrower details, checkout time, return deadlines, and condition status.
+- **Dynamic Kit Customizer**: Add or remove parts from existing kits, create brand-new kits, or add new parts (e.g. `L298N`, `Micro Servo`) directly into lab inventory.
+- **Stock Manager**: Adjust owned lab stock as new supplies arrive.
+- **Defective Processing**: Record defect notes, decrement broken stock, and automatically issue replacement kits.
+- **Member History**: Searchable audit log filtered by registration number showing checkout history and the approving OC member's name.
 
 ---
 
 ## 🛠️ Tech Stack
-- **Frontend**: React 18, Vite, `qrcode`, CSS3 (Mobile-responsive).
-- **Backend**: Node.js, Express, CORS, `dotenv`.
-- **Data Store**: Clean in-memory store initialized with seed components for lab testing.
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | React 19, Vite 8 | Ultra-fast client build and reactive UI |
+| **Styling** | Custom CSS3 + Glassmorphism | Space-tech theme, responsive layouts, dark/light modes |
+| **QR Engine** | `qrcode`, `html5-qrcode` | Client-side QR generation & camera scanner |
+| **Backend** | Node.js, Express | RESTful API server with atomic issuing logic |
+| **Data Store** | In-Memory Database (`db.js`) | Fast competition data store pre-seeded with robotics kits |
+| **Deployment** | Render (Backend), Vercel (Frontend) | Production cloud deployment |
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/auth/login` | Authenticate as Participant (`p`) or OC Member (`oc` with passcode) |
-| `GET` | `/api/parts` | Fetch lab inventory with optional search and category filters |
-| `POST` | `/api/parts` | Register a new component in lab inventory |
-| `PATCH` | `/api/parts/:id` | Adjust total owned stock or low-stock thresholds |
-| `GET` | `/api/kits` | Fetch all kits with detailed part breakdown and `canIssueCount` |
-| `POST` | `/api/kits` | Create a brand new robotics kit |
-| `PATCH` | `/api/kits/:id` | Modify items and quantities inside an existing kit |
-| `POST` | `/api/issues` | Participant checkout request (generates pickup code) |
-| `POST` | `/api/issues/:id/approve` | OC approval with atomic all-or-nothing stock decrement |
-| `POST` | `/api/issues/:id/reject` | OC rejects a pending request |
+| `GET` | `/api/parts` | Fetch inventory with optional search and category filters |
+| `POST` | `/api/parts` | Add a new component to lab inventory |
+| `PATCH` | `/api/parts/:id` | Adjust total stock counts |
+| `GET` | `/api/kits` | Fetch all kits with `canIssueCount` computed on the fly |
+| `POST` | `/api/kits` | Create a brand-new robotics kit |
+| `PATCH` | `/api/kits/:id` | Modify components and quantities in an existing kit |
+| `GET` | `/api/issues` | List checkout issues (supports `?status=` and `?regNo=`) |
+| `POST` | `/api/issues` | Submit checkout request (generates pickup code) |
+| `POST` | `/api/issues/:id/approve` | Approve checkout with atomic all-or-nothing stock deduction |
+| `POST` | `/api/issues/:id/reject` | Reject a pending checkout request |
 | `PATCH` | `/api/issues/:id/return` | Standard return (restores non-defective stock) |
-| `POST` | `/api/issues/:id/return-defective` | Process damaged return and issue replacement kit |
-| `GET` | `/api/issues` | List issues; supports `?status=overdue` and `?regNo=` |
+| `POST` | `/api/issues/:id/return-defective` | Process damaged return and auto-issue replacement kit |
+| `GET` | `/api/health` | Service health check |
 
 ---
 
-## 💻 How to Run Locally
+## 💻 Running Locally
 
-### 1. Clone & Navigate
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
+
+### 1. Clone the Repository
 ```bash
-git clone <your-repo-url>
-cd partspal-1
+git clone https://github.com/Swati-web-arch/PartsPal.git
+cd PartsPal
 ```
 
-### 2. Start the Backend Server
+### 2. Start the Backend Server (Terminal 1)
 ```bash
 cd server
 npm install
 npm run dev
 ```
-Server starts on `http://localhost:5000`.
+> Server runs on `http://localhost:5000`
 
-### 3. Start the Frontend Client
-In a new terminal window:
+### 3. Start the Frontend Client (Terminal 2)
 ```bash
 cd client
 npm install
 npm run dev
 ```
-Client starts on `http://localhost:5173`. Open in your browser!
+> Client runs on `http://localhost:5173`
+
+---
+
+## 🔐 Demo Credentials
+
+| Role | Name | Email ID | Reg No | Passcode |
+|---|---|---|---|---|
+| **Participant (P)** | `xyz abc` | `xyz.abc2025@vitstudent.ac.in` | `25BRS1234` | *(None required)* |
+| **OC Lead (OC)** | `Admin Lead` | `lead.oc2025@vitstudent.ac.in` | `25BRS9999` | **`labsecret123`** |
 
 ---
 
 ## 🧪 Evaluator Demo Walkthrough
-1. **Participant View**:
-   - Log in as **Participant (P)** (`alex@vit.ac.in`, `22BCE1234`).
-   - Request the **Robotic Car Line-Follower Kit** using the quick preset `+4 Hours`.
-   - View the generated **Pickup Code** (e.g. `K-4821`) and click **📱 Open Scannable QR Code**.
-2. **OC Lead View**:
-   - Log out and log in as **OC Member (OC)** with passcode.
-   - Check the **📥 Pending Requests** tab, locate `K-4821`, and click **Approve & Issue**.
-   - Check the **Live Stats Bar** to watch Active Checkouts increment!
-3. **Customize Kit**:
-   - Navigate to **🧰 Customize Kits & Parts** $\rightarrow$ click **+ Create New Kit**.
-   - Click **+ Create Brand New Part** and add `L298N Motor Driver` with 10 units in stock.
-   - Publish the kit $\rightarrow$ switch to the participant view to see it immediately available with live stock calculations!
+
+1. **Requesting a Kit (Participant)**:
+   - Sign in as **Participant (P)**.
+   - Under **Available Kits**, choose **Robotic Car Line-Follower Kit** and click **Request This Kit**.
+   - Notice the form opens with **local live time** pre-filled. Select **+4 Hours** return preset and submit.
+   - Copy or view your **Pickup Code** (e.g. `K-4821`) and click **📱 QR** to view the scannable code.
+2. **Scanning & Approving (OC Lead)**:
+   - Switch to **OC Lead Portal** with passcode `labsecret123`.
+   - On the **Pending Requests** tab, click **📷 Scan Participant QR**.
+   - Scan the student's QR code using your webcam (or type `K-4821` in the fallback box).
+   - Click **✓ Approve & Issue Kit**. Watch stock counts decrement atomically!
+3. **Testing All-or-Nothing Safety**:
+   - Try requesting a kit whose components are out of stock. The system stops checkout immediately and shows the exact shortage.
 4. **Defective Return & Replacement**:
-   - Under **📋 Who Has What**, click **⚠️ Mark Defective & Replace Kit** on an active kit checkout.
-   - Enter defect notes and confirm $\rightarrow$ the old kit is marked defective and a **fresh replacement kit** is issued immediately to that student!
+   - Go to **Who Has What** $\rightarrow$ click **⚠️ Return Defective / Auto-Replace**.
+   - Confirm defect note $\rightarrow$ damaged part count is written off, and a fresh replacement kit is generated instantly for the participant.
+5. **Custom Kit & Part Creator**:
+   - Go to **Customize Kits & Parts** $\rightarrow$ click **+ Create New Kit**.
+   - Use **+ Create Brand New Part** to add `L298N Motor Driver` on the fly. Publish the kit and observe live participant availability.
 
 ---
 
 ## 🌐 Live Deployment Links
-- **Frontend (Vercel / Netlify)**: `[Insert live client URL]`
-- **Backend (Render)**: `[Insert live Render URL]`
+
+- **Frontend (Vercel)**: `https://partspal-1.vercel.app` *(or your Vercel link)*
+- **Backend API (Render)**: `https://partspal-1.onrender.com/api`
 
 ---
 
-## 🤖 How I Used AI
-As encouraged by the competition rules (*"Use AI as a helper, not as the builder"*):
-- Used Google Antigravity / Gemini as an interactive coding mentor to plan the application architecture, refine business logic (e.g. all-or-nothing validation, 10-minute grace period calculations), and pair-program the full-stack implementation step by step.
+## 🤖 How AI Was Used
+In accordance with competition guidelines (*"Use AI as a tool and mentor, not as an unguided builder"*):
+- Used AI pair-programming to architect the atomic all-or-nothing stock algorithm, refine the 10-minute grace period calculations, implement the webcam QR scanner integration, and optimize the responsive cosmic UI.
