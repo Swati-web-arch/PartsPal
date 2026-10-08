@@ -378,7 +378,7 @@ export default function OCPortal({
         {activeTab === 'requests' && (
           <div style={{ marginTop: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
               Pending requests submitted by participants. Approve will decrement stock atomically with all-or-nothing validation.
             </p>
             <button
@@ -391,7 +391,7 @@ export default function OCPortal({
           </div>
 
             {pendingRequests.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                 ✨ No pending checkout requests.
               </div>
             ) : (
@@ -409,23 +409,23 @@ export default function OCPortal({
                           >
                             📱 QR
                           </button>
-                          <span className="badge badge-warning" style={{ background: '#fef3c7', color: '#92400e' }}>
+                          <span className="badge badge-warning" style={{ background: 'var(--bg-secondary)', color: 'var(--primary)' }}>
                             {req.code}
                           </span>
                         </div>
                       </div>
 
                       <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
-                        <div><strong>Participant:</strong> {req.memberName} (<code>{req.regNo}</code>)</div>
-                        <div><strong>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
-                        <div><strong>Due Date:</strong> {new Date(req.dueDate).toLocaleString()}</div>
+                        <div><strong style={{ color: 'var(--text-secondary)' }}>Participant:</strong> {req.memberName} (<code>{req.regNo}</code>)</div>
+                        <div><strong style={{ color: 'var(--text-secondary)' }}>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
+                        <div><strong style={{ color: 'var(--text-secondary)' }}>Due Date:</strong> {new Date(req.dueDate).toLocaleString()}</div>
                       </div>
 
-                      <div style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                        <strong>Requested Items:</strong>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                        <strong style={{ color: 'var(--text-secondary)' }}>Requested Items:</strong>
                         <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
                           {req.lines.map((l, idx) => (
-                            <li key={idx}>{l.qty}x {l.partName}</li>
+                            <li key={idx} style={{ color: 'var(--text-main)' }}>{l.qty}x {l.partName}</li>
                           ))}
                         </ul>
                       </div>

@@ -190,7 +190,7 @@ export default function ParticipantPortal({
             {/* Kits Section */}
             {(selectedCategory === 'All' || selectedCategory === 'Kits') && (
               <div style={{ marginTop: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.75rem', color: '#1e293b' }}>
+                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.75rem', color: 'var(--text-main)' }}>
                   🚀 Complete Robotics Kits
                 </h2>
                 <div className="grid">
@@ -204,15 +204,15 @@ export default function ParticipantPortal({
                           </span>
                         </div>
 
-                        <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem' }}>
-                          <strong style={{ display: 'block', marginBottom: '0.35rem', color: '#475569' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+                          <strong style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
                             Kit Contains:
                           </strong>
                           <ul style={{ paddingLeft: '1.2rem', margin: 0 }}>
                             {kit.items.map((it, idx) => (
-                              <li key={idx}>
+                              <li key={idx} style={{ color: 'var(--text-main)' }}>
                                 {it.qty}x {it.partName}{' '}
-                                <span style={{ color: it.available >= it.qty ? '#16a34a' : '#dc2626', fontSize: '0.8rem' }}>
+                                <span style={{ color: it.available >= it.qty ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 600 }}>
                                   ({it.available} in stock)
                                 </span>
                               </li>
@@ -248,7 +248,7 @@ export default function ParticipantPortal({
             {/* Individual Parts & Sensors Section */}
             {selectedCategory !== 'Kits' && (
               <div style={{ marginTop: '2rem' }}>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.75rem', color: '#1e293b' }}>
+                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.75rem', color: 'var(--text-main)' }}>
                   ⚙️ Individual Sensors & Components
                 </h2>
                 <div className="grid">
@@ -257,14 +257,14 @@ export default function ParticipantPortal({
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                           <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{part.name}</h3>
-                          <span className="badge badge-warning" style={{ background: '#f1f5f9', color: '#475569' }}>
+                          <span className="badge badge-warning" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                             {part.category}
                           </span>
                         </div>
 
                         <div style={{ margin: '0.5rem 0', fontSize: '0.85rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Available in Lab:</span>
+                            <span style={{ color: 'var(--text-muted)' }}>Available in Lab:</span>
                             <strong>{part.available} / {part.total}</strong>
                           </div>
                           {part.isLowStock && (
@@ -297,7 +297,7 @@ export default function ParticipantPortal({
         {activeTab === 'my-requests' && (
           <div style={{ marginTop: '1rem' }}>
             {myRequests.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                 You have not made any checkout requests yet.
               </div>
             ) : (
@@ -322,8 +322,8 @@ export default function ParticipantPortal({
 
                         <div style={{ fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '0.75rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <strong>Pickup Code:</strong>
-                            <code style={{ color: '#2563eb', fontWeight: 700, fontSize: '1rem' }}>{req.code}</code>
+                            <strong style={{ color: 'var(--text-secondary)' }}>Pickup Code:</strong>
+                            <code style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '1rem' }}>{req.code}</code>
                             <button
                               style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
                               title="Show QR Code"
@@ -332,25 +332,25 @@ export default function ParticipantPortal({
                               📱 QR
                             </button>
                           </div>
-                          <div><strong>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
-                          <div><strong>Expected Return:</strong> {new Date(req.dueDate).toLocaleString()}</div>
+                          <div><strong style={{ color: 'var(--text-secondary)' }}>Borrowing At:</strong> {new Date(req.borrowingAt).toLocaleString()}</div>
+                          <div><strong style={{ color: 'var(--text-secondary)' }}>Expected Return:</strong> {new Date(req.dueDate).toLocaleString()}</div>
                           {req.status === 'pending' && (
-                            <div style={{ color: '#b45309', fontWeight: 500, marginTop: '0.25rem' }}>
+                            <div style={{ color: '#fbbf24', fontWeight: 500, marginTop: '0.25rem' }}>
                               ⏳ Awaiting OC desk approval
                             </div>
                           )}
                           {req.replacedIssueId && (
-                            <div style={{ color: '#16a34a', fontWeight: 500, marginTop: '0.25rem' }}>
+                            <div style={{ color: '#34d399', fontWeight: 500, marginTop: '0.25rem' }}>
                               🔄 Issued as replacement for defective kit
                             </div>
                           )}
                         </div>
 
-                        <div style={{ background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem' }}>
-                          <strong>Items:</strong>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 0.75rem', borderRadius: '8px', fontSize: '0.8rem' }}>
+                          <strong style={{ color: 'var(--text-secondary)' }}>Items:</strong>
                           <ul style={{ paddingLeft: '1.2rem', margin: '0.2rem 0 0 0' }}>
                             {req.lines.map((l, idx) => (
-                              <li key={idx}>{l.qty}x {l.partName}</li>
+                              <li key={idx} style={{ color: 'var(--text-main)' }}>{l.qty}x {l.partName}</li>
                             ))}
                           </ul>
                         </div>
@@ -362,6 +362,7 @@ export default function ParticipantPortal({
             )}
           </div>
         )}
+
       </main>
 
       {/* Request Modal with Quick Presets */}
