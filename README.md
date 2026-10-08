@@ -25,7 +25,7 @@ During hackathons and robotics competition seasons, managing microcontrollers, s
 
 1. **Dual Role Sign In**:
    - **Participants (P)**: Sign in with VIT student email (`xyz.abc2025@vitstudent.ac.in`) & registration number (`25BRS1234`).
-   - **OC Leads (OC)**: Protected with secret passcode authentication (`labsecret123`).
+   - **OC Leads (OC)**: Protected with secret passcode authentication (`VITCRC123`).
 2. **All-or-Nothing Kit Issuing (Core Algorithm)**:
    - When a kit is requested, the server atomically checks available stock across **every individual component**. If even one part is out of stock, the transaction fails safely with an itemized explanation of missing items, preventing partial checkouts and corrupted stock counts.
 3. **Dynamic Kit Builder & Part Manager**:
@@ -131,7 +131,7 @@ npm run dev
 | Role | Name | Email ID | Reg No | Passcode |
 |---|---|---|---|---|
 | **Participant (P)** | `xyz abc` | `xyz.abc2025@vitstudent.ac.in` | `25BRS1234` | *(None required)* |
-| **OC Lead (OC)** | `Admin Lead` | `lead.oc2025@vitstudent.ac.in` | `25BRS9999` | **`labsecret123`** |
+| **OC Lead (OC)** | `Admin Lead` | `lead.oc2025@vitstudent.ac.in` | `25BRS9999` | **`VITCRC123`** |
 
 ---
 
@@ -143,7 +143,7 @@ npm run dev
    - Notice the form opens with **local live time** pre-filled. Select **+4 Hours** return preset and submit.
    - Copy or view your **Pickup Code** (e.g. `K-4821`) and click **📱 QR** to view the scannable code.
 2. **Scanning & Approving (OC Lead)**:
-   - Switch to **OC Lead Portal** with passcode `labsecret123`.
+   - Switch to **OC Lead Portal** with passcode `VITCRC123`.
    - On the **Pending Requests** tab, click **📷 Scan Participant QR**.
    - Scan the student's QR code using your webcam (or type `K-4821` in the fallback box).
    - Click **✓ Approve & Issue Kit**. Watch stock counts decrement atomically!
@@ -160,8 +160,9 @@ npm run dev
 
 ## 🌐 Live Deployment Links
 
-- **Frontend (Vercel)**: `https://partspal-1.vercel.app` *(or your Vercel link)*
-- **Backend API (Render)**: `https://partspal-1.onrender.com/api`
+- **Frontend (Vercel)**: `[https://parts-pal-git-main-sy-0ae0.vercel.app/]` *(or your Vercel link)*
+- **Backend API Base (Render)**: `https://partspal-1.onrender.com/api`
+- **Backend API Health Check(Render)**: `https://partspal-1.onrender.com/api/health`
 
 ---
 
