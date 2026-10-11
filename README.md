@@ -160,7 +160,7 @@ npm run dev
 
 ## 🌐 Live Deployment Links
 
-- **Frontend (Vercel)**: `[https://parts-pal-git-main-sy-0ae0.vercel.app/]` *(or your Vercel link)*
+- **Frontend (Vercel)**: `https://parts-pal-git-main-sy-0ae0.vercel.app` *(or your Vercel link)*
 - **Backend API Base (Render)**: `https://partspal-1.onrender.com/api`
 - **Backend API Health Check(Render)**: `https://partspal-1.onrender.com/api/health`
 
